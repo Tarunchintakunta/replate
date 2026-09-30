@@ -42,7 +42,7 @@ export function ImageStage({
 }: ImageStageProps) {
 	const [uploading, setUploading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const imgContainerRef = useRef<HTMLDivElement>(null);
+	const imgRef = useRef<HTMLImageElement>(null);
 
 	const [drawing, setDrawing] = useState(false);
 	const [startX, setStartX] = useState(0);
@@ -81,13 +81,15 @@ export function ImageStage({
 	};
 
 	const getPointerPos = (e: PointerEvent) => {
-		if (!imgContainerRef.current || !image) return null;
-		const rect = imgContainerRef.current.getBoundingClientRect();
-		const scaleX = image.width / rect.width;
-		const scaleY = image.height / rect.height;
+		if (!imgRef.current || !image) return null;
+		// Map from the rendered <img> rect (not the frame, which carries the border)
+		// into image pixels, clamped so boxes never leave the image.
+		const rect = imgRef.current.getBoundingClientRect();
+		const x = ((e.clientX - rect.left) / rect.width) * image.width;
+		const y = ((e.clientY - rect.top) / rect.height) * image.height;
 		return {
-			x: Math.round((e.clientX - rect.left) * scaleX),
-			y: Math.round((e.clientY - rect.top) * scaleY),
+			x: Math.round(Math.min(Math.max(x, 0), image.width)),
+			y: Math.round(Math.min(Math.max(y, 0), image.height)),
 		};
 	};
 
@@ -161,11 +163,15 @@ export function ImageStage({
 	const displayDrawH = Math.abs(currentY - startY);
 
 	return (
-		<div className="flex-1 rounded-md bg-wash border border-rule flex items-center justify-center overflow-hidden relative">
+		<div className="w-full flex justify-center">
+			{/* Frame is exactly the image's aspect ratio, capped at 75vh tall, so the
+			    <img>, the SVG overlay and pointer mapping all share one rect. */}
 			<div
-				ref={imgContainerRef}
-				className="relative shadow-sm max-w-full max-h-full touch-none select-none cursor-crosshair"
-				style={{ aspectRatio: `${image.width} / ${image.height}` }}
+				className="relative border border-ink rounded-[2px] overflow-hidden touch-none select-none cursor-crosshair"
+				style={{
+					aspectRatio: `${image.width} / ${image.height}`,
+					width: `min(100%, calc(75vh * ${image.width / image.height}))`,
+				}}
 				onPointerDown={onPointerDown}
 				onPointerMove={onPointerMove}
 				onPointerUp={onPointerUp}
@@ -175,8 +181,9 @@ export function ImageStage({
 				<img
 					src={resultSrc ?? `/api/images/${image.id}/file`}
 					alt={resultSrc ? "Result" : "Uploaded"}
+					ref={imgRef}
 					draggable={false}
-					className="w-full h-full object-contain pointer-events-none"
+					className="block w-full h-full pointer-events-none"
 				/>
 				{!resultSrc && (
 					<svg
@@ -184,7 +191,7 @@ export function ImageStage({
 						role="img"
 						className="absolute inset-0 w-full h-full pointer-events-none"
 						viewBox={`0 0 ${image.width} ${image.height}`}
-						preserveAspectRatio="xMidYMid meet"
+						preserveAspectRatio="none"
 					>
 						{lines.map((line) => {
 							const isSelected = line.id === selectedLineId;

@@ -78,3 +78,29 @@ describe("MockEditor", () => {
 		expect(metadata.format).toBe("png");
 	});
 });
+
+describe("MockEditor removal fill", () => {
+	it("fills a removed box with the color just outside its top-left corner", async () => {
+		const bg = { r: 30, g: 120, b: 200 };
+		const original = await sharp({
+			create: { width: 2000, height: 1000, channels: 3, background: bg },
+		})
+			.png()
+			.toBuffer();
+
+		const result = await new MockEditor().edit({
+			imageBuffer: original,
+			replacements: [
+				{ from: "sale", to: "", x: 400, y: 200, width: 300, height: 100 },
+			],
+		});
+
+		// 2000px long edge is scaled to 1024, so the box center lands at (280, 128).
+		const { data, info } = await sharp(result.buffer)
+			.raw()
+			.toBuffer({ resolveWithObject: true });
+		expect(info.width).toBe(1024);
+		const i = (128 * info.width + 280) * info.channels;
+		expect([data[i], data[i + 1], data[i + 2]]).toEqual([bg.r, bg.g, bg.b]);
+	});
+});
