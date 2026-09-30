@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { GenerateBar } from "./GenerateBar";
 import { ImageStage, type UploadedImage } from "./ImageStage";
 import { LineList } from "./LineList";
 
@@ -13,12 +14,24 @@ export type Line = {
 	y: number;
 	width: number;
 	height: number;
+	/** Included in the next replace request. */
+	checked: boolean;
+	/** From OCR, so `id` is a real ocr_lines row. Drawn boxes are false. */
+	detected: boolean;
 };
 
 export function Workspace() {
 	const [image, setImage] = useState<UploadedImage | null>(null);
 	const [lines, setLines] = useState<Line[]>([]);
 	const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
+	const [resultId, setResultId] = useState<string | null>(null);
+
+	const handleUpload = (img: UploadedImage) => {
+		setImage(img);
+		setLines([]);
+		setSelectedLineId(null);
+		setResultId(null);
+	};
 
 	const handleDrawBox = (box: {
 		x: number;
@@ -30,10 +43,13 @@ export function Workspace() {
 			id: uuidv4(),
 			text: "",
 			replacement: "",
+			checked: true,
+			detected: false,
 			...box,
 		};
 		setLines((prev) => [...prev, newLine]);
 		setSelectedLineId(newLine.id);
+		setResultId(null);
 	};
 
 	return (
@@ -51,7 +67,8 @@ export function Workspace() {
 				>
 					<ImageStage
 						image={image}
-						onImageUpload={setImage}
+						onImageUpload={handleUpload}
+						resultSrc={resultId ? `/api/generations/${resultId}/file` : null}
 						lines={lines}
 						selectedLineId={selectedLineId}
 						onSelectLine={setSelectedLineId}
@@ -68,21 +85,18 @@ export function Workspace() {
 						lines={lines}
 						setLines={setLines}
 						selectedLineId={selectedLineId}
-						onSelectLine={setSelectedLineId}
+						onSelectLine={(id) => {
+							setSelectedLineId(id);
+							setResultId(null);
+						}}
 					/>
 
-					<div className="border-t border-rule pt-4 flex flex-col gap-2">
-						<button
-							type="button"
-							disabled
-							className="bg-green text-paper py-2 px-4 rounded-md font-medium opacity-40 cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-2 focus:ring-offset-paper transition-shadow"
-						>
-							Generate
-						</button>
-						<div className="text-sm text-center text-ink opacity-70">
-							10 credits
-						</div>
-					</div>
+					<GenerateBar
+						imageId={image?.id ?? null}
+						lines={lines}
+						resultId={resultId}
+						onResult={setResultId}
+					/>
 				</div>
 			</div>
 		</main>

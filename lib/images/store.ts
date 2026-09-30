@@ -44,3 +44,12 @@ export async function readPng(key: string): Promise<Buffer> {
 
   return fs.readFile(fullPath);
 }
+
+export async function deletePng(key: string): Promise<void> {
+  const base = getStorageBase();
+  const fullPath = path.resolve(base, key);
+  if (!fullPath.startsWith(base)) {
+    throw new Error('Path traversal detected');
+  }
+  await fs.rm(fullPath, { force: true });
+}
