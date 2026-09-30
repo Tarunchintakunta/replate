@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { type ReactNode, useEffect, useState } from "react";
 import { useBalance } from "./useBalance";
 
@@ -32,7 +33,12 @@ export function TopBar({ account }: { account?: ReactNode }) {
 			</div>
 			<div className="flex items-center gap-4 text-sm">
 				<div className="flex items-center gap-2">
-					<span className="text-ink">Credits:</span>
+					<Link
+						href="/pricing"
+						className="text-ink underline underline-offset-2 rounded focus:outline-none focus:ring-2 focus:ring-green"
+					>
+						Credits
+					</Link>
 					<span
 						data-testid="balance"
 						className="font-mono bg-wash px-2 py-0.5 rounded text-ink border border-rule"
