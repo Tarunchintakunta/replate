@@ -7,6 +7,11 @@ import { processUpload } from "../../../../lib/images/accept";
 import { originalKey, writePng } from "../../../../lib/images/store";
 
 export async function POST(request: Request) {
+	const user = await currentUser();
+	if (!user) {
+		return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+	}
+
 	try {
 		const formData = await request.formData();
 		const file = formData.get("file") as Blob | null;
@@ -17,7 +22,6 @@ export async function POST(request: Request) {
 		const buffer = Buffer.from(await file.arrayBuffer());
 		const processed = await processUpload(buffer);
 
-		const user = await currentUser();
 		const imageId = uuidv4();
 		const storageKey = originalKey(imageId);
 

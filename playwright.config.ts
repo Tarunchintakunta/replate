@@ -38,6 +38,7 @@ export default defineConfig({
 			EDITOR_PROVIDER: "mock",
 			OCR_MODE: "fixture",
 			NEXT_DIST_DIR: ".next-e2e",
+			APP_URL: "http://localhost:3000",
 		},
 	},
 });

@@ -1,16 +1,17 @@
+import { signIn } from "./signin";
 import { test, expect } from '@playwright/test';
 
 test('shell empty state', async ({ page }) => {
-  await page.goto('/');
+  await signIn(page);
 
-  await expect(page.getByText('Replate')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Replate' })).toBeVisible();
   await expect(page.getByText('Change the words. Keep the picture.')).toBeVisible();
   await expect(page.getByText('Drop a PNG, JPG, or WebP.')).toBeVisible();
   await expect(page.getByText('10').first()).toBeVisible();
 });
 
 test('layout stacks under 800px', async ({ page }) => {
-  await page.goto('/');
+  await signIn(page);
   await page.setViewportSize({ width: 390, height: 844 });
   
   const leftCol = page.getByTestId('left-col');
@@ -27,7 +28,7 @@ test('layout stacks under 800px', async ({ page }) => {
 });
 
 test('layout is two columns at 1280px', async ({ page }) => {
-  await page.goto('/');
+  await signIn(page);
   await page.setViewportSize({ width: 1280, height: 800 });
   
   const leftCol = page.getByTestId('left-col');

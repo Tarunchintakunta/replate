@@ -1,3 +1,4 @@
+import { signIn } from "./signin";
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs/promises';
 import sharp from 'sharp';
@@ -21,7 +22,7 @@ test('drop a generated PNG and see an img', async ({ page }) => {
     errors.push(err.message);
   });
 
-  await page.goto('/');
+  await signIn(page);
 
   const fileInput = page.locator('input[type="file"]');
   await fileInput.setInputFiles(filePath);

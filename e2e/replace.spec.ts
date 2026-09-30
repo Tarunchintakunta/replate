@@ -1,3 +1,4 @@
+import { signIn } from "./signin";
 import fs from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import sharp from "sharp";
@@ -18,7 +19,7 @@ test("replace SALE with HELLO, download, and spend 10 credits", async ({ page },
 	const uploadPath = testInfo.outputPath("sale.png");
 	await fs.writeFile(uploadPath, upload);
 
-	await page.goto("/");
+	await signIn(page);
 	await expect(page.getByTestId("balance")).toHaveText("10");
 
 	await page.locator('input[type="file"]').setInputFiles(uploadPath);
