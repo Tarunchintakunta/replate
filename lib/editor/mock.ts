@@ -26,6 +26,17 @@ export class MockEditor implements ImageEditor {
 
 		let svg = `<svg viewBox="0 0 ${imgWidth} ${imgHeight}" width="${imgWidth}" height="${imgHeight}" xmlns="http://www.w3.org/2000/svg">`;
 
+		const { data: pixels, info } = await sharp(resizedBuffer)
+			.toColourspace("srgb")
+			.raw()
+			.toBuffer({ resolveWithObject: true });
+		const sampleAt = (px: number, py: number) => {
+			const cx = Math.min(Math.max(px, 0), info.width - 1);
+			const cy = Math.min(Math.max(py, 0), info.height - 1);
+			const i = (cy * info.width + cx) * info.channels;
+			return `rgb(${pixels[i]},${pixels[i + 1]},${pixels[i + 2]})`;
+		};
+
 		for (const r of input.replacements) {
 			const x = Math.round(r.x * scale);
 			const y = Math.round(r.y * scale);
@@ -37,13 +48,16 @@ export class MockEditor implements ImageEditor {
 				const fontSize = Math.max(12, h - 4);
 				svg += `<text x="${x + 4}" y="${y + h - 4}" font-size="${fontSize}" fill="black" font-family="sans-serif">${r.to}</text>`;
 			} else {
-				svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#888888" />`;
+				svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${sampleAt(x - 1, y - 1)}" />`;
 			}
 		}
 		svg += "</svg>";
 
 		const finalBuffer = await sharp(resizedBuffer)
 			.composite([{ input: Buffer.from(svg), top: 0, left: 0 }])
+			// A removal on a flat background can be pixel-identical to the input; the tag
+			// keeps the bytes different, as the spec requires.
+			.withExif({ IFD0: { Software: "replate mock" } })
 			.png()
 			.toBuffer();
 
