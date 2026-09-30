@@ -22,3 +22,5 @@ data/
 storage/
 .env
 .omc/
+/.next-e2e/
+/temp/
