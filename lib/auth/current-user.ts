@@ -1,37 +1,20 @@
-import { db } from '../../db/client';
-import { users, creditLedger } from '../../db/schema';
-import { eq } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
+import { eq } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
+import { db } from "../../db/client";
+import { users } from "../../db/schema";
+import { grantTrial } from "../credits/ledger";
 
+const LOCAL_EMAIL = "local@replate.test";
+
+// ponytail: single local user until auth lands in issue 11.
 export async function currentUser() {
-  const email = 'local@replate.test';
-  
-  const [existingUser] = await db.select().from(users).where(eq(users.email, email));
-  if (existingUser) {
-    return existingUser;
-  }
+	return db.transaction((tx) => {
+		const existing = tx.select().from(users).where(eq(users.email, LOCAL_EMAIL)).get();
+		if (existing) return existing;
 
-  // Not using a transaction here because better-sqlite3 transactions cannot easily mix with async/await
-  // under the Drizzle generic wrapper without `.all()` synchronous calls.
-  // This is safe since it's just the bootstrap user on local development.
-
-  const newUserId = uuidv4();
-  const newUser = {
-    id: newUserId,
-    email,
-    name: 'Local Dev',
-    createdAt: new Date(),
-  };
-  await db.insert(users).values(newUser);
-
-  const ledgerId = uuidv4();
-  await db.insert(creditLedger).values({
-    id: ledgerId,
-    userId: newUserId,
-    delta: 10,
-    reason: 'trial',
-    createdAt: new Date(),
-  });
-
-  return newUser;
+		const user = { id: uuidv4(), email: LOCAL_EMAIL, name: "Local Dev", createdAt: new Date() };
+		tx.insert(users).values(user).run();
+		grantTrial(user.id, tx);
+		return user;
+	});
 }
