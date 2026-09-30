@@ -23,7 +23,7 @@ export async function GET(
 
 	try {
 		const buffer = await readPng(image.storageKey);
-		return new NextResponse(buffer, {
+		return new NextResponse(new Uint8Array(buffer), {
 			headers: {
 				"Content-Type": "image/png",
 				"Cache-Control": "public, max-age=31536000, immutable",
