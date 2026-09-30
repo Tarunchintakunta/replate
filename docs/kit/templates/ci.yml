@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      EDITOR_PROVIDER: mock
+      OCR_MODE: fixture
+      AUTH_SECRET: ci-only-not-a-secret
+      DATABASE_URL: file:./data/replate.db
+      APP_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec playwright test
+      - run: pnpm build
+      - run: pnpm exec tsx scripts/secret-scan.ts
+
+  ocr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: python3 -m venv services/ocr/.venv
+      - run: services/ocr/.venv/bin/pip install -r services/ocr/requirements.txt
+      - run: RUN_OCR=1 pnpm test lib/ocr/sidecar.test.ts
+        env:
+          EDITOR_PROVIDER: mock
+          OCR_MODE: rapid
+          AUTH_SECRET: ci-only-not-a-secret
+          DATABASE_URL: file:./data/replate.db
