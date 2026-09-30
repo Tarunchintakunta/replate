@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useBalance } from "./useBalance";
 
 const PROVIDER_LABEL: Record<string, string> = {
@@ -9,7 +9,7 @@ const PROVIDER_LABEL: Record<string, string> = {
 	wavespeed: "WaveSpeed",
 };
 
-export function TopBar() {
+export function TopBar({ account }: { account?: ReactNode }) {
 	const balance = useBalance();
 	const [provider, setProvider] = useState("Local preview");
 
@@ -46,6 +46,7 @@ export function TopBar() {
 				>
 					{provider}
 				</div>
+				{account}
 			</div>
 		</header>
 	);
