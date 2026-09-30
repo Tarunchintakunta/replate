@@ -15,9 +15,14 @@ const failingEditor: ImageEditor = {
 	},
 };
 
+// Turbopack inlines `process.env.NODE_ENV` (even through a constant key) as "development"
+// under `next dev`. Build the key at runtime to read the real process env, which
+// Playwright sets to "test".
+const NODE_ENV_KEY = ["NODE", "ENV"].join("_");
+
 function editorFor(request: Request): ImageEditor {
 	const forced =
-		process.env.NODE_ENV === "test" &&
+		process.env[NODE_ENV_KEY] === "test" &&
 		request.headers.get("x-replate-fail") === "1";
 	return forced ? failingEditor : getEditor();
 }

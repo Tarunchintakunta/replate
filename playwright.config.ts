@@ -28,7 +28,8 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: `pnpm exec next dev --port ${PORT}`,
+		// NODE_ENV in `env` below gets replaced before next starts, so set it in the command.
+		command: `NODE_ENV=test pnpm exec next dev --port ${PORT}`,
 		url: `http://localhost:${PORT}`,
 		reuseExistingServer: false,
 		timeout: 120_000,
@@ -39,8 +40,6 @@ export default defineConfig({
 			OCR_MODE: "fixture",
 			NEXT_DIST_DIR: ".next-e2e",
 			APP_URL: "http://localhost:3000",
-			// Lets e2e/failure.spec.ts force a provider failure via x-replate-fail.
-			NODE_ENV: "test",
 		},
 	},
 });

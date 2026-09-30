@@ -28,7 +28,8 @@ test("a failed replace shows one danger sentence and keeps the balance", async (
 	await page.getByLabel("Replacement").fill("HELLO");
 	await page.getByRole("button", { name: "Replace text" }).click();
 
-	const alert = page.getByRole("alert");
+	// Next.js adds its own empty role=alert route announcer; target ours.
+	const alert = page.locator("p[role=alert]");
 	await expect(alert).toHaveCount(1);
 	await expect(alert).toContainText("The edit failed");
 	await expect(page.locator('img[alt="Uploaded"]')).toBeVisible();
