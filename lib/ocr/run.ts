@@ -1,10 +1,11 @@
 import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { type ParsedLine, parseOcrOutput } from './parse';
 
 export async function runOcr(imagePath: string, imageWidth: number, imageHeight: number): Promise<ParsedLine[]> {
-  const mode = process.env.OCR_MODE || 'fixture';
-  
+  const mode = process.env.OCR_MODE || 'rapid';
+
   if (mode === 'fixture') {
     return [
       {
@@ -18,11 +19,16 @@ export async function runOcr(imagePath: string, imageWidth: number, imageHeight:
     ];
   }
 
+  // turbopackIgnore: the venv is spawned at runtime and its python symlink leaves the repo.
+  const pythonPath = path.join(/* turbopackIgnore: true */ process.cwd(), 'services/ocr/.venv/bin/python');
+  const scriptPath = path.join(/* turbopackIgnore: true */ process.cwd(), 'services/ocr/ocr.py');
+  if (!existsSync(pythonPath)) {
+    throw new Error(
+      'OCR is not installed. Run: python3 -m venv services/ocr/.venv && services/ocr/.venv/bin/pip install -r services/ocr/requirements.txt',
+    );
+  }
+
   return new Promise((resolve, reject) => {
-    // turbopackIgnore: the venv is spawned at runtime and its python symlink leaves the repo.
-    const pythonPath = path.join(/* turbopackIgnore: true */ process.cwd(), 'services/ocr/.venv/bin/python');
-    const scriptPath = path.join(/* turbopackIgnore: true */ process.cwd(), 'services/ocr/ocr.py');
-    
     const child = spawn(pythonPath, [scriptPath, imagePath], {
       timeout: 10000, // 10 second kill
     });
