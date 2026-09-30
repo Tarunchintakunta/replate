@@ -12,6 +12,9 @@ export async function POST(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	const user = await currentUser();
+	if (!user) {
+		return new NextResponse("Unauthorized", { status: 401 });
+	}
 	const { id } = await params;
 
 	const image = db
