@@ -19,8 +19,9 @@ export async function runOcr(imagePath: string, imageWidth: number, imageHeight:
   }
 
   return new Promise((resolve, reject) => {
-    const pythonPath = path.resolve('services/ocr/.venv/bin/python');
-    const scriptPath = path.resolve('services/ocr/ocr.py');
+    // turbopackIgnore: the venv is spawned at runtime and its python symlink leaves the repo.
+    const pythonPath = path.join(/* turbopackIgnore: true */ process.cwd(), 'services/ocr/.venv/bin/python');
+    const scriptPath = path.join(/* turbopackIgnore: true */ process.cwd(), 'services/ocr/ocr.py');
     
     const child = spawn(pythonPath, [scriptPath, imagePath], {
       timeout: 10000, // 10 second kill
