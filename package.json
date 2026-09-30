@@ -7,24 +7,34 @@
 		"build": "next build",
 		"start": "next start",
 		"lint": "eslint && biome check .",
-		"test": "vitest run"
+		"test": "vitest run",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "tsx db/migrate.ts"
 	},
 	"dependencies": {
+		"better-sqlite3": "^13.0.3",
+		"drizzle-orm": "^0.45.3",
 		"next": "16.3.7",
 		"react": "19.2.8",
 		"react-dom": "19.2.8",
+		"uuid": "^14.0.2",
 		"zod": "^4.6.5"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.14",
 		"@playwright/test": "^1.63.0",
 		"@tailwindcss/postcss": "^4",
+		"@types/better-sqlite3": "^9.6.0",
 		"@types/node": "^20",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
+		"@types/uuid": "^11.0.0",
+		"dotenv": "^18.0.4",
+		"drizzle-kit": "^0.31.11",
 		"eslint": "^9",
 		"eslint-config-next": "16.3.7",
 		"tailwindcss": "^4",
+		"tsx": "^4.23.15",
 		"typescript": "^5",
 		"vitest": "^5.0.2"
 	},
