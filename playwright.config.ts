@@ -39,6 +39,8 @@ export default defineConfig({
 			OCR_MODE: "fixture",
 			NEXT_DIST_DIR: ".next-e2e",
 			APP_URL: "http://localhost:3000",
+			// Lets e2e/failure.spec.ts force a provider failure via x-replate-fail.
+			NODE_ENV: "test",
 		},
 	},
 });

@@ -46,4 +46,10 @@ test("replace SALE with HELLO, download, and spend 10 credits", async ({ page },
 
 	await page.reload();
 	await expect(page.getByTestId("balance")).toHaveText("0");
+
+	// At 0 the button is disabled with the no-credits label.
+	await page.locator('input[type="file"]').setInputFiles(uploadPath);
+	await page.getByRole("button", { name: "Detect Text" }).click();
+	await page.getByLabel("Replacement").fill("AGAIN");
+	await expect(page.getByRole("button", { name: "No credits left." })).toBeDisabled();
 });
