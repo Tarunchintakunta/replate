@@ -64,3 +64,8 @@ export const creditLedger = sqliteTable('credit_ledger', {
   stripeEventId: text('stripe_event_id'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
+
+export const stripeEvents = sqliteTable('stripe_events', {
+  id: text('id').primaryKey(),
+  receivedAt: integer('received_at', { mode: 'timestamp' }).notNull(),
+});
