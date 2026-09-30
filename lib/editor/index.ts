@@ -4,6 +4,7 @@ import type { ImageEditor } from "./types";
 import { WaveSpeedEditor } from "./wavespeed";
 
 const name = process.env.EDITOR_PROVIDER ?? "mock";
+export const providerName = name;
 if (name !== "mock" && name !== "gemini" && name !== "wavespeed") {
 	throw new Error(`Unknown EDITOR_PROVIDER: ${name}`);
 }
