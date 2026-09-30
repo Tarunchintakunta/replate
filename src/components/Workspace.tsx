@@ -1,4 +1,41 @@
+"use client";
+
+import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import { ImageStage, type UploadedImage } from "./ImageStage";
+import { LineList } from "./LineList";
+
+export type Line = {
+	id: string;
+	text: string;
+	replacement: string;
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+};
+
 export function Workspace() {
+	const [image, setImage] = useState<UploadedImage | null>(null);
+	const [lines, setLines] = useState<Line[]>([]);
+	const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
+
+	const handleDrawBox = (box: {
+		x: number;
+		y: number;
+		width: number;
+		height: number;
+	}) => {
+		const newLine: Line = {
+			id: uuidv4(),
+			text: "",
+			replacement: "",
+			...box,
+		};
+		setLines((prev) => [...prev, newLine]);
+		setSelectedLineId(newLine.id);
+	};
+
 	return (
 		<main className="flex-1 flex flex-col items-center justify-center p-4 lg:p-8">
 			<div className="text-center mb-8">
@@ -8,38 +45,31 @@ export function Workspace() {
 			</div>
 
 			<div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-6 flex-1 min-h-0">
-				{/* Left column (Image / Drop area) */}
 				<div
 					data-testid="left-col"
 					className="w-full md:w-[60%] flex flex-col relative"
 				>
-					<div className="flex-1 border border-rule rounded-md border-dashed bg-wash flex items-center justify-center p-6 focus-within:ring-2 focus-within:ring-green focus-within:ring-offset-2 focus-within:ring-offset-paper transition-shadow">
-						{/* The drop area might need a button or input to be focusable */}
-						<label className="cursor-pointer text-center flex flex-col items-center w-full h-full justify-center">
-							<span className="text-ink font-medium">
-								Drop a PNG, JPG, or WebP.
-							</span>
-							<input
-								type="file"
-								className="sr-only"
-								aria-label="Drop a PNG, JPG, or WebP."
-							/>
-						</label>
-					</div>
+					<ImageStage
+						image={image}
+						onImageUpload={setImage}
+						lines={lines}
+						selectedLineId={selectedLineId}
+						onSelectLine={setSelectedLineId}
+						onDrawBox={handleDrawBox}
+					/>
 				</div>
 
-				{/* Right column (Lines / Controls) */}
 				<div
 					data-testid="right-col"
 					className="w-full md:w-[40%] flex flex-col gap-4"
 				>
-					<div className="flex-1 border border-rule rounded-md p-4 bg-paper flex flex-col">
-						<h2 className="font-semibold text-ink mb-4">Lines</h2>
-						{/* Empty space for future list */}
-						<div className="text-sm text-ink opacity-70">
-							No image uploaded.
-						</div>
-					</div>
+					<LineList
+						image={image}
+						lines={lines}
+						setLines={setLines}
+						selectedLineId={selectedLineId}
+						onSelectLine={setSelectedLineId}
+					/>
 
 					<div className="border-t border-rule pt-4 flex flex-col gap-2">
 						<button
