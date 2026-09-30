@@ -10,6 +10,7 @@ export type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 export const GENERATION_COST = 10;
 const TRIAL_GRANT = 10;
+export const PACK_CREDITS = 100;
 
 export function balanceOf(userId: string, tx: Tx | typeof db = db): number {
 	const row = tx
@@ -55,6 +56,19 @@ export function debitGeneration(
 			delta: -GENERATION_COST,
 			reason: "debit_generation",
 			generationId,
+			createdAt: new Date(),
+		})
+		.run();
+}
+
+export function creditPack(userId: string, stripeEventId: string, tx: Tx): void {
+	tx.insert(creditLedger)
+		.values({
+			id: uuidv4(),
+			userId,
+			delta: PACK_CREDITS,
+			reason: "stripe_pack",
+			stripeEventId,
 			createdAt: new Date(),
 		})
 		.run();
