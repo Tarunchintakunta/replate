@@ -18,6 +18,8 @@ export type UploadedImage = {
 interface ImageStageProps {
 	image: UploadedImage | null;
 	onImageUpload: (img: UploadedImage) => void;
+	/** When set, the preview shows this generated PNG instead of the original. */
+	resultSrc: string | null;
 	lines: Line[];
 	selectedLineId: string | null;
 	onSelectLine: (id: string | null) => void;
@@ -32,6 +34,7 @@ interface ImageStageProps {
 export function ImageStage({
 	image,
 	onImageUpload,
+	resultSrc,
 	lines,
 	selectedLineId,
 	onSelectLine,
@@ -170,52 +173,56 @@ export function ImageStage({
 			>
 				{/* eslint-disable-next-line @next/next/no-img-element */}
 				<img
-					src={`/api/images/${image.id}/file`}
-					alt="Uploaded"
+					src={resultSrc ?? `/api/images/${image.id}/file`}
+					alt={resultSrc ? "Result" : "Uploaded"}
 					draggable={false}
 					className="w-full h-full object-contain pointer-events-none"
 				/>
-				<svg
-					aria-label="Image annotation layer"
-					role="img"
-					className="absolute inset-0 w-full h-full pointer-events-none"
-					viewBox={`0 0 ${image.width} ${image.height}`}
-					preserveAspectRatio="xMidYMid meet"
-				>
-					{lines.map((line) => {
-						const isSelected = line.id === selectedLineId;
-						return (
+				{!resultSrc && (
+					<svg
+						aria-label="Image annotation layer"
+						role="img"
+						className="absolute inset-0 w-full h-full pointer-events-none"
+						viewBox={`0 0 ${image.width} ${image.height}`}
+						preserveAspectRatio="xMidYMid meet"
+					>
+						{lines.map((line) => {
+							const isSelected = line.id === selectedLineId;
+							return (
+								<rect
+									key={line.id}
+									x={line.x}
+									y={line.y}
+									width={line.width}
+									height={line.height}
+									fill="rgba(255,255,255,0.2)"
+									stroke={
+										isSelected ? "var(--color-green)" : "var(--color-ink)"
+									}
+									strokeWidth={isSelected ? 2 : 1}
+									vectorEffect="non-scaling-stroke"
+									className="pointer-events-auto cursor-pointer transition-colors"
+									onPointerDown={(e) => {
+										e.stopPropagation();
+										onSelectLine(line.id);
+									}}
+								/>
+							);
+						})}
+						{drawing && displayDrawW > 0 && displayDrawH > 0 && (
 							<rect
-								key={line.id}
-								x={line.x}
-								y={line.y}
-								width={line.width}
-								height={line.height}
-								fill="rgba(255,255,255,0.2)"
-								stroke={isSelected ? "var(--color-green)" : "var(--color-ink)"}
-								strokeWidth={isSelected ? 2 : 1}
+								x={displayDrawX}
+								y={displayDrawY}
+								width={displayDrawW}
+								height={displayDrawH}
+								fill="rgba(14, 107, 82, 0.1)"
+								stroke="var(--color-green)"
+								strokeWidth={2}
 								vectorEffect="non-scaling-stroke"
-								className="pointer-events-auto cursor-pointer transition-colors"
-								onPointerDown={(e) => {
-									e.stopPropagation();
-									onSelectLine(line.id);
-								}}
 							/>
-						);
-					})}
-					{drawing && displayDrawW > 0 && displayDrawH > 0 && (
-						<rect
-							x={displayDrawX}
-							y={displayDrawY}
-							width={displayDrawW}
-							height={displayDrawH}
-							fill="rgba(14, 107, 82, 0.1)"
-							stroke="var(--color-green)"
-							strokeWidth={2}
-							vectorEffect="non-scaling-stroke"
-						/>
-					)}
-				</svg>
+						)}
+					</svg>
+				)}
 			</div>
 		</div>
 	);

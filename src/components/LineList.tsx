@@ -48,6 +48,8 @@ export function LineList({
 						id: String(l.id),
 						text: l.text,
 						replacement: l.replacedWith || "",
+						checked: false,
+						detected: true,
 						x: l.x,
 						y: l.y,
 						width: l.width,
@@ -112,9 +114,17 @@ export function LineList({
 								<div className="flex items-center gap-2">
 									<input
 										type="checkbox"
-										checked={isSelected}
-										onChange={() => onSelectLine(isSelected ? null : line.id)}
-										className="w-4 h-4 cursor-pointer"
+										checked={line.checked}
+										aria-label={`Replace ${line.text ? `"${line.text}"` : "drawn box"}`}
+										onClick={(e) => e.stopPropagation()}
+										onChange={() =>
+											setLines((prev) =>
+												prev.map((l) =>
+													l.id === line.id ? { ...l, checked: !l.checked } : l,
+												),
+											)
+										}
+										className="w-4 h-4 cursor-pointer accent-green"
 									/>
 									<span className="text-sm font-medium text-ink">
 										{line.text
@@ -138,7 +148,11 @@ export function LineList({
 											setLines((prev) =>
 												prev.map((l) =>
 													l.id === line.id
-														? { ...l, replacement: e.target.value }
+														? {
+																...l,
+																replacement: e.target.value,
+																checked: true,
+															}
 														: l,
 												),
 											);
