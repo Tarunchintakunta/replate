@@ -4,7 +4,28 @@ import { db } from "../../../../db/client";
 import { generations } from "../../../../db/schema";
 import { currentUser } from "../../../../lib/auth/current-user";
 import { getEditor, providerName } from "../../../../lib/editor";
+import type { ImageEditor } from "../../../../lib/editor/types";
 import { GenerationBody, runGeneration } from "../../../../lib/generation/run";
+
+// Playwright forces the failure path with this header. Honored only when NODE_ENV is
+// "test", so `pnpm dev` (development) and `pnpm start` (production) ignore it.
+const failingEditor: ImageEditor = {
+	edit: async () => {
+		throw new Error("Forced failure (x-replate-fail)");
+	},
+};
+
+// Turbopack inlines `process.env.NODE_ENV` (even through a constant key) as "development"
+// under `next dev`. Build the key at runtime to read the real process env, which
+// Playwright sets to "test".
+const NODE_ENV_KEY = ["NODE", "ENV"].join("_");
+
+function editorFor(request: Request): ImageEditor {
+	const forced =
+		process.env[NODE_ENV_KEY] === "test" &&
+		request.headers.get("x-replate-fail") === "1";
+	return forced ? failingEditor : getEditor();
+}
 
 export async function POST(request: Request) {
 	const user = await currentUser();
@@ -22,7 +43,7 @@ export async function POST(request: Request) {
 	const result = await runGeneration(
 		user.id,
 		parsed.data,
-		getEditor(),
+		editorFor(request),
 		providerName,
 	);
 	if (result.status === 200) {

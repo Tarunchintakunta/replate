@@ -28,7 +28,8 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: `pnpm exec next dev --port ${PORT}`,
+		// NODE_ENV in `env` below gets replaced before next starts, so set it in the command.
+		command: `NODE_ENV=test pnpm exec next dev --port ${PORT}`,
 		url: `http://localhost:${PORT}`,
 		reuseExistingServer: false,
 		timeout: 120_000,
