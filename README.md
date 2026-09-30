@@ -20,6 +20,17 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## OCR setup
+
+Detect Text runs a local RapidOCR sidecar. Install it once (Python 3.12 recommended):
+
+```bash
+python3 -m venv services/ocr/.venv
+services/ocr/.venv/bin/pip install -r services/ocr/requirements.txt
+```
+
+`OCR_MODE` defaults to `rapid`. Set `OCR_MODE=fixture` only for tests, which returns a canned line.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

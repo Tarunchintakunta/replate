@@ -31,7 +31,8 @@ export function LineList({
 				method: "POST",
 			});
 			if (!res.ok) {
-				throw new Error("Failed to detect text");
+				const body = await res.json().catch(() => null);
+				throw new Error(body?.error || "Failed to detect text");
 			}
 			const data = await res.json();
 			setLines(
@@ -60,7 +61,7 @@ export function LineList({
 			onSelectLine(null);
 		} catch (err) {
 			const error = err as Error;
-			setError(error.message || "Something went wrong");
+			setError(error.message || "Failed to detect text");
 		} finally {
 			setDetecting(false);
 		}

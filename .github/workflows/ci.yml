@@ -28,7 +28,7 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm exec playwright test
       - run: pnpm build
-      # Secret scan of the client bundle lands with issue 15 (scripts/secret-scan.ts).
+      - run: pnpm exec tsx scripts/secret-scan.ts
 
   ocr:
     runs-on: ubuntu-latest

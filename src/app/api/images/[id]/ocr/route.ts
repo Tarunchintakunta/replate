@@ -64,6 +64,9 @@ export async function POST(
 		return NextResponse.json({ lines: storedLines });
 	} catch (err) {
 		console.error("OCR Error:", err);
-		return new NextResponse("Internal Server Error", { status: 500 });
+		return NextResponse.json(
+			{ error: err instanceof Error ? err.message : "OCR failed" },
+			{ status: 500 },
+		);
 	}
 }
