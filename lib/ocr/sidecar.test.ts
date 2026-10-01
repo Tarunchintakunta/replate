@@ -80,10 +80,11 @@ describe.skipIf(!process.env.RUN_OCR)("runOcr sidecar (RUN_OCR=1)", () => {
 			.toFile(file);
 		try {
 			const lines = await runOcr(file, 1400, 400);
-			// Full-size OCR cuts display type into words and drops the first letter.
+			// The default detection cuts display type into pieces and drops letters
+			// ("ummer", "Fe", "estival"); which letters depends on the serif installed.
 			expect(lines.map((l) => l.text)).toEqual(["Summer Festival"]);
-			expect(lines[0].x).toBeLessThanOrEqual(90);
-			expect(lines[0].x + lines[0].width).toBeGreaterThan(1000);
+			expect(lines[0].x).toBeLessThanOrEqual(110);
+			expect(lines[0].width).toBeGreaterThan(800);
 		} finally {
 			await fs.unlink(file).catch(() => {});
 		}

@@ -16,7 +16,7 @@ A full pass over the running app found rough edges that the per-slice tests did 
 - A past result opens on the picture it was made from, at that picture's shape.
 - At 390px the header fits without horizontal scroll and the replace button stays in view while the list scrolls.
 - With no credits, the bar links to the Credits page.
-- OCR reads the image a second time at a coarse scale. A display-size line is corrected from it when the full-size box lost a glyph, and display-size words on one baseline are joined into one line. Small text is untouched.
+- OCR detects twice: the library default for body text, and once with the long side capped at 480px for display type, which the default cuts into pieces with letters missing. Display-size lines come from the second pass; small text is untouched.
 - The local editor finds free room to the right of the old words on gradients, not only on flat color.
 
 ## Verify
