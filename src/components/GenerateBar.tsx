@@ -1,18 +1,27 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import type { UploadedImage } from "./ImageStage";
 import { creditsChanged, useBalance } from "./useBalance";
 import type { Line } from "./Workspace";
 
 const COST = 10;
 
-type Recent = { id: string; status: string; created_at: string };
+type Recent = {
+	id: string;
+	status: string;
+	created_at: string;
+	image: UploadedImage;
+};
 
 interface GenerateBarProps {
 	imageId: string | null;
 	lines: Line[];
 	resultId: string | null;
 	onResult: (generationId: string | null) => void;
+	/** A past result is shown on the picture it was made from. */
+	onOpenRecent: (generationId: string, image: UploadedImage) => void;
 }
 
 export function GenerateBar({
@@ -20,6 +29,7 @@ export function GenerateBar({
 	lines,
 	resultId,
 	onResult,
+	onOpenRecent,
 }: GenerateBarProps) {
 	const balance = useBalance();
 	const [running, setRunning] = useState(false);
@@ -82,38 +92,51 @@ export function GenerateBar({
 	else if (noCredits) label = "No credits left.";
 
 	return (
-		<div className="border-t border-rule pt-4 flex flex-col gap-2">
-			{error && (
-				<p role="alert" className="text-sm text-danger">
-					{error}
-				</p>
-			)}
-			<button
-				type="button"
-				onClick={generate}
-				disabled={disabled}
-				className="bg-green text-paper py-2 px-4 rounded-md font-medium disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-2 focus:ring-offset-paper transition-shadow"
-			>
-				{label}
-			</button>
-			<div className="text-sm text-center text-ink opacity-70">
-				{COST} credits
+		<>
+			{/* Narrow windows stack the columns; the button stays in view at the bottom.
+			    Sticky needs the tall column as its parent, hence the fragment. */}
+			<div className="sticky bottom-0 z-10 bg-paper border-t border-rule flex flex-col gap-2 pt-4 pb-2 md:static md:pb-0">
+				{error && (
+					<p role="alert" className="text-sm text-danger">
+						{error}
+					</p>
+				)}
+				<button
+					type="button"
+					onClick={generate}
+					disabled={disabled}
+					className="bg-green text-paper py-2 px-4 rounded-md font-medium disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-2 focus:ring-offset-paper transition-shadow"
+				>
+					{label}
+				</button>
+				{noCredits ? (
+					<Link
+						href="/pricing"
+						className="text-sm text-center text-green underline underline-offset-2 rounded focus:outline-none focus:ring-2 focus:ring-green"
+					>
+						Add credits
+					</Link>
+				) : (
+					<div className="text-sm text-center text-ink opacity-70">
+						{COST} credits
+					</div>
+				)}
+				{resultId && (
+					<a
+						href={`/api/generations/${resultId}/file`}
+						download={`replate-${resultId}.png`}
+						className="text-sm text-center text-green underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-green rounded"
+					>
+						Download PNG
+					</a>
+				)}
 			</div>
 			<p className="text-xs text-center text-ink opacity-70">
 				Font and background matching is best-effort.
 			</p>
-			{resultId && (
-				<a
-					href={`/api/generations/${resultId}/file`}
-					download={`replate-${resultId}.png`}
-					className="text-sm text-center text-green underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-green rounded"
-				>
-					Download PNG
-				</a>
-			)}
 
 			{recent.length > 0 && (
-				<div className="mt-4">
+				<div className="mt-2">
 					<h2 className="font-semibold text-ink text-sm mb-2">Recent</h2>
 					<ul className="flex flex-col gap-1 text-sm">
 						{recent.map((g) => (
@@ -121,7 +144,7 @@ export function GenerateBar({
 								{g.status === "succeeded" ? (
 									<button
 										type="button"
-										onClick={() => onResult(g.id)}
+										onClick={() => onOpenRecent(g.id, g.image)}
 										className={`w-full text-left px-2 py-1 rounded border focus:outline-none focus:ring-2 focus:ring-green ${
 											g.id === resultId ? "border-green bg-wash" : "border-rule"
 										}`}
@@ -138,6 +161,6 @@ export function GenerateBar({
 					</ul>
 				</div>
 			)}
-		</div>
+		</>
 	);
 }
