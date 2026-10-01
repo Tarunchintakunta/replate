@@ -58,7 +58,9 @@ def installed_faces():
             index = 0
             while True:
                 try:
-                    font = ImageFont.truetype(path, REF, index=index)
+                    # An odd size on purpose: a bitmap-only face (color emoji) loads at
+                    # its fixed strikes and nowhere else, and it cannot be resized to match.
+                    font = ImageFont.truetype(path, 37, index=index)
                 except Exception:
                     break
                 try:
@@ -244,8 +246,28 @@ def similarity(old, new):
     ) / total
 
 
+def head(old, text, limit=40):
+    """The first few words of a long line and the glyphs that belong to them. A face is
+    recognizable from five words; drawing all ninety characters in every face is not free."""
+    words, spans = text.split(), word_spans(old)
+    if len(text) <= limit or len(words) != len(spans):
+        return old, text
+    count, keep = 0, len(words)
+    for i, word in enumerate(words):
+        count += len(word) + 1
+        if count >= limit:
+            keep = i + 1
+            break
+    part = old[:, : spans[keep - 1][1]]
+    rows = np.flatnonzero(part.max(axis=1) > 0.5)
+    if len(rows) == 0:
+        return old, text
+    return part[rows[0] : rows[-1] + 1], " ".join(words[:keep])
+
+
 def match_font(old, text, faces):
     """Faces ranked by how well their rendering of `text` matches the old glyphs."""
+    old, text = head(old, text)
     old_aspect = old.shape[1] / old.shape[0]
     old_density = float(old.mean())
     ranked = []
