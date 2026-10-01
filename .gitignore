@@ -23,4 +23,6 @@ storage/
 .env
 .omc/
 /.next-e2e/
+/.next-probe/
+/.claude/
 /temp/

@@ -20,16 +20,37 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## OCR setup
+## OCR and local editor setup
 
-Detect Text runs a local RapidOCR sidecar. Install it once (Python 3.12 recommended):
+Detect Text runs a local RapidOCR sidecar, and `EDITOR_PROVIDER=local` runs
+`services/edit/edit.py` in the same venv. Install it once (Python 3.12 recommended):
 
 ```bash
 python3 -m venv services/ocr/.venv
 services/ocr/.venv/bin/pip install -r services/ocr/requirements.txt
+cp .env.example .env
 ```
 
 `OCR_MODE` defaults to `rapid`. Set `OCR_MODE=fixture` only for tests, which returns a canned line.
+
+## Editors
+
+| `EDITOR_PROVIDER` | What it does | Needs |
+|---|---|---|
+| `local` | Erases the old words with OpenCV and redraws the new ones in the closest installed font, at full resolution. Nothing outside the edited box changes. | the venv above |
+| `mock` | Paints a labeled box. For tests and CI. | nothing |
+| `gemini` | Sends the image to Gemini for a generative edit. | `GEMINI_API_KEY` |
+| `wavespeed` | Sends the image to FLUX Kontext Pro. | `WAVESPEED_API_KEY` |
+
+The local editor is strongest on screenshots, documents, and flat or gradient artwork.
+Text on a busy photo, on a curve, or in perspective is where a generative provider does better.
+
+Measure the local editor against scenes with a known answer:
+
+```bash
+services/ocr/.venv/bin/python services/edit/eval.py            # every font installed
+services/ocr/.venv/bin/python services/edit/eval.py --held-out # the true font hidden
+```
 
 ## Learn More
 
