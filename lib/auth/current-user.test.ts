@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { db } from "../../db/client";
 import { creditLedger, users } from "../../db/schema";
 import { balanceOf } from "../credits/ledger";
-import { ensureUser, LOCAL_EMAIL, localLoginAllowed } from "./users";
+import { ensureUser, LOCAL_EMAIL, localCreditsAllowed, localLoginAllowed } from "./users";
 
 describe("ensureUser", () => {
 	it("creates local@replate.test once and grants the trial once", () => {
@@ -32,5 +32,18 @@ describe("localLoginAllowed", () => {
 			vi.stubEnv("APP_URL", url);
 			expect(localLoginAllowed()).toBe(false);
 		}
+	});
+});
+
+describe("localCreditsAllowed", () => {
+	afterEach(() => vi.unstubAllEnvs());
+
+	it("is true only for the local user on http://localhost:3000", () => {
+		vi.stubEnv("APP_URL", "http://localhost:3000");
+		expect(localCreditsAllowed(LOCAL_EMAIL)).toBe(true);
+		expect(localCreditsAllowed("someone@example.com")).toBe(false);
+
+		vi.stubEnv("APP_URL", "https://replate.example");
+		expect(localCreditsAllowed(LOCAL_EMAIL)).toBe(false);
 	});
 });

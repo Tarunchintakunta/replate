@@ -1,10 +1,14 @@
 import Link from "next/link";
+import { currentUser } from "../../../lib/auth/current-user";
+import { localCreditsAllowed } from "../../../lib/auth/users";
 import { billingEnabled } from "../../../lib/billing/checkout";
 
 export const dynamic = "force-dynamic";
 
-export default function PricingPage() {
+export default async function PricingPage() {
 	const enabled = billingEnabled();
+	const user = await currentUser();
+	const local = user ? localCreditsAllowed(user.email) : false;
 
 	return (
 		<main className="flex-1 flex flex-col items-center justify-center p-6 gap-6 bg-paper">
@@ -34,6 +38,23 @@ export default function PricingPage() {
 					</p>
 				)}
 			</div>
+			{local && (
+				<form
+					action="/api/credits/local"
+					method="post"
+					className="w-full max-w-xs flex flex-col gap-2 text-center"
+				>
+					<button
+						type="submit"
+						className="w-full border border-rule text-ink bg-paper py-2 px-4 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-2 focus:ring-offset-paper"
+					>
+						Add 100 local credits
+					</button>
+					<p className="text-sm text-ink opacity-70">
+						Free on this Mac, for the local user only.
+					</p>
+				</form>
+			)}
 			<Link href="/" className="text-sm text-ink underline underline-offset-2">
 				Back to the desk
 			</Link>

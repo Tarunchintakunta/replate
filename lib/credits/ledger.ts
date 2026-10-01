@@ -61,6 +61,19 @@ export function debitGeneration(
 		.run();
 }
 
+/** A pack with no payment, for the local user on localhost. The route decides who that is. */
+export function grantLocalPack(userId: string, tx: Tx): void {
+	tx.insert(creditLedger)
+		.values({
+			id: uuidv4(),
+			userId,
+			delta: PACK_CREDITS,
+			reason: "adjust",
+			createdAt: new Date(),
+		})
+		.run();
+}
+
 export function creditPack(userId: string, stripeEventId: string, tx: Tx): void {
 	tx.insert(creditLedger)
 		.values({
