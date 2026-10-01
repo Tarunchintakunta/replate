@@ -102,6 +102,16 @@ describe("runGeneration", () => {
 		expect(balanceOf(userId)).toBe(10);
 	});
 
+	it("does not rate limit the local provider, which has no key to drain", async () => {
+		const { userId, body } = await setup();
+		for (let i = 0; i < 10; i++) {
+			await runGeneration(userId, body, new ThrowingEditor(), "local");
+		}
+		const result = await runGeneration(userId, body, new MockEditor(), "local");
+		expect(result.status).toBe(200);
+		expect(balanceOf(userId)).toBe(0);
+	});
+
 	it("returns 404 for another user's image", async () => {
 		const { body } = await setup();
 		const other = await setup();
