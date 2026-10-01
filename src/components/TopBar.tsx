@@ -6,6 +6,7 @@ import { useBalance } from "./useBalance";
 
 const PROVIDER_LABEL: Record<string, string> = {
 	mock: "Local preview",
+	local: "Local editor",
 	gemini: "Gemini",
 	wavespeed: "WaveSpeed",
 };
