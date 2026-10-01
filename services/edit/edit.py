@@ -179,8 +179,8 @@ def find_ink(img, x, y, w, h):
     bx, by = X0 + left, Y0 + top
     return {
         "color": color,
-        # A flat surround is repainted exactly; anything else is inpainted.
-        "fill": bg if region[ring].std(axis=0).max() < 3 else None,
+        # The background color when the surround is flat, else None.
+        "flat": bg if region[ring].std(axis=0).max() < 3 else None,
         "box": (bx, by, right - left, bottom - top),
         "alpha": alpha,
         "erase": dist[grown] > max(12.0, 0.2 * float(np.linalg.norm(axis))),
@@ -188,8 +188,12 @@ def find_ink(img, x, y, w, h):
     }
 
 
-def erase(img, x, y, w, h, mask, fill):
-    """Remove `mask` (box-sized bool): paint `fill`, or inpaint from the surroundings."""
+def erase(img, x, y, w, h, mask):
+    """Remove `mask` (box-sized bool) from the image.
+
+    A smooth surround (flat color, gradient) is fitted with a quadratic surface and
+    repainted from it, which leaves no trace. Anything else is inpainted.
+    """
     H, W = img.shape[:2]
     grow = max(2, round(h * 0.06))
     if mask.mean() > 0.55:
@@ -200,13 +204,27 @@ def erase(img, x, y, w, h, mask, fill):
     X0, Y0, X1, Y1 = max(x - m, 0), max(y - m, 0), min(x + w + m, W), min(y + h + m, H)
     full = np.zeros((Y1 - Y0, X1 - X0), np.uint8)
     full[y - Y0 : y - Y0 + h, x - X0 : x - X0 + w] = mask.astype(np.uint8) * 255
-    full = cv2.dilate(full, np.ones((3, 3), np.uint8), iterations=grow)
+    full = cv2.dilate(full, np.ones((3, 3), np.uint8), iterations=grow) > 0
     crop = np.ascontiguousarray(img[Y0:Y1, X0:X1])
-    if fill is None:
-        img[Y0:Y1, X0:X1] = cv2.inpaint(crop, full, 3, cv2.INPAINT_TELEA)
-    else:
-        crop[full > 0] = np.round(fill)
-        img[Y0:Y1, X0:X1] = crop
+
+    def basis(ys, xs):
+        u, v = xs / crop.shape[1] - 0.5, ys / crop.shape[0] - 0.5
+        return np.stack([np.ones_like(u), u, v, u * u, u * v, v * v], axis=1)
+
+    # Fit on the unmasked pixels in and right around the box: farther out is another
+    # surface (the wallpaper behind a chat bubble).
+    near = np.zeros_like(full)
+    near[max(y - Y0 - 3, 0) : y - Y0 + h + 3, max(x - X0 - 3, 0) : x - X0 + w + 3] = True
+    known = np.nonzero(near & ~full)
+    if len(known[0]) >= 60:
+        A = basis(*known)
+        target = crop[known].astype(np.float32)
+        coef, *_ = np.linalg.lstsq(A, target, rcond=None)
+        if np.sqrt(((A @ coef - target) ** 2).mean()) < 3:
+            crop[full] = np.clip(basis(*np.nonzero(full)) @ coef + 0.5, 0, 255).astype(np.uint8)
+            img[Y0:Y1, X0:X1] = crop
+            return
+    img[Y0:Y1, X0:X1] = cv2.inpaint(crop, full.astype(np.uint8) * 255, 3, cv2.INPAINT_TELEA)
 
 
 def word_spans(alpha):
@@ -415,7 +433,7 @@ def replace(img, r, faces):
         # surroundings hold other words (a timestamp). Read before erasing.
         old_text = read_text(img, ix0, iy0, ix1 - ix0, iy1 - iy0)
 
-    erase(img, x, y, w, h, found["erase"], found["fill"])
+    erase(img, x, y, w, h, found["erase"])
     if not new_text:
         return
 
@@ -474,9 +492,9 @@ def replace(img, r, faces):
     # Longer words must not run into what follows on the line (a timestamp, the edge of
     # a chat bubble). On a flat background the next non-background column is the limit.
     room = W - 2 - start
-    if found["fill"] is not None and not centered:
+    if found["flat"] is not None and not centered:
         band = img[iy0:iy1, ix1:W].astype(np.float32)
-        busy = np.flatnonzero((np.linalg.norm(band - found["fill"], axis=2) > MIN_CONTRAST).any(axis=0))
+        busy = np.flatnonzero((np.linalg.norm(band - found["flat"], axis=2) > MIN_CONTRAST).any(axis=0))
         if len(busy):
             room = min(room, ix1 + int(busy[0]) - (iy1 - iy0) // 2 - start)
     room = max(room, ix1 - ix0)
