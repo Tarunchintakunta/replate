@@ -10,7 +10,7 @@
 | Database | SQLite via Drizzle and `better-sqlite3` |
 | Images | `sharp` for decode, resize, EXIF strip, PNG encode |
 | OCR | Python 3.12 venv, `rapidocr-onnxruntime`, script `services/ocr/ocr.py` |
-| Editor | Server-only interface. Implementations: mock, Gemini, WaveSpeed |
+| Editor | Server-only interface. Implementations: mock, local (OpenCV and installed fonts, `services/edit/edit.py`), Gemini, WaveSpeed |
 | Auth | Auth.js. Dev credentials provider always. Google provider only if env is set. |
 | Payments | Stripe test mode, Checkout, one pack |
 | Tests | Vitest and Playwright |
@@ -67,7 +67,7 @@ export type EditInput = {
 
 export type EditOutput = {
   png: Buffer
-  provider: "mock" | "gemini" | "wavespeed"
+  provider: "mock" | "local" | "gemini" | "wavespeed"
   model: string
 }
 
@@ -132,7 +132,7 @@ The disk path is not the public URL.
 
 ## What the client is allowed to know
 
-Public env: nothing secret. The UI may show the active provider name returned by `GET /api/health`, which reports `mock`, `gemini`, or `wavespeed` and whether the key is present as a boolean. It never returns the key.
+Public env: nothing secret. The UI may show the active provider name returned by `GET /api/health`, which reports `mock`, `local`, `gemini`, or `wavespeed` and whether the key is present as a boolean. It never returns the key.
 
 ## Commands Claude must wire
 
@@ -155,11 +155,13 @@ services/ocr/.venv/bin/pip install -r services/ocr/requirements.txt
 app/                     routes and server actions
 components/              UI
 db/                      schema and migrations
-lib/editor/              interface, mock, gemini, wavespeed
+lib/editor/              interface, mock, local, gemini, wavespeed
 lib/credits/
 lib/images/
 services/ocr/ocr.py
 services/ocr/requirements.txt
+services/edit/edit.py    the local editor, run in the OCR venv
+services/edit/eval.py    its accuracy benchmark
 e2e/
 scripts/smoke-live.ts
 docs/kit/                this kit, copied in issue 01

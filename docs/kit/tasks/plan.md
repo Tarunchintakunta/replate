@@ -19,6 +19,8 @@ Order is the issue number. Do not parallelize. Each slice is one session and one
 | 13 | Failure path | Provider throw does not change the ledger. Button disabled at 0 |
 | 14 | CI complete | Actions green on the PR |
 | 15 | Security pass | Secret scan fails the build if a key shape appears in client output |
+| 16 | Local editor | `EDITOR_PROVIDER=local` makes a real edit with no key. `eval.py` holds a mean overlap of 0.5 |
+| 17 | Local credits | The local user refills from `/pricing`. The local editor is not rate limited |
 
 Issues 09 and 10 are adapters behind the interface from 06. They do not change the UI except the provider pill.
 

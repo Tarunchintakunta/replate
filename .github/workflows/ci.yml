@@ -50,3 +50,5 @@ jobs:
       - run: pnpm test lib/ocr/sidecar.test.ts
         env:
           RUN_OCR: "1"
+      # The local editor runs in the same venv and is skipped where the venv is absent.
+      - run: pnpm test lib/editor/local.test.ts
