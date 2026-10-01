@@ -70,6 +70,25 @@ describe.skipIf(!process.env.RUN_OCR)("runOcr sidecar (RUN_OCR=1)", () => {
 		}
 	}, 15000); // first model load in the sidecar is slow
 
+	it("reads a headline as one line with every letter inside the box", async () => {
+		vi.stubEnv("OCR_MODE", "rapid");
+		const file = path.resolve("temp-sidecar-headline.png");
+		const svg = `<svg width="1400" height="400"><text x="80" y="250" font-family="serif" font-size="150" fill="#3c1428">Summer Festival</text></svg>`;
+		await sharp({ create: { width: 1400, height: 400, channels: 3, background: "#ffc478" } })
+			.composite([{ input: Buffer.from(svg), top: 0, left: 0 }])
+			.png()
+			.toFile(file);
+		try {
+			const lines = await runOcr(file, 1400, 400);
+			// Full-size OCR cuts display type into words and drops the first letter.
+			expect(lines.map((l) => l.text)).toEqual(["Summer Festival"]);
+			expect(lines[0].x).toBeLessThanOrEqual(90);
+			expect(lines[0].x + lines[0].width).toBeGreaterThan(1000);
+		} finally {
+			await fs.unlink(file).catch(() => {});
+		}
+	}, 15000);
+
 	it("returns boxes in image pixels for light text on a dark screenshot", async () => {
 		vi.stubEnv("OCR_MODE", "rapid");
 		const file = path.resolve("temp-sidecar-dark.png");
