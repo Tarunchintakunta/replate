@@ -24,5 +24,6 @@ storage/
 .omc/
 /.next-e2e/
 /.next-probe/
+__pycache__/
 /.claude/
 /temp/

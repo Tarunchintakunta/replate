@@ -21,7 +21,7 @@ Redrawing text is a typesetting problem when the words are known. OCR already gi
 | | True font installed | True font hidden |
 |---|---|---|
 | Mean glyph overlap (soft IoU) | 0.72 | 0.46 |
-| Cases at or above 0.5 | 91% | 42% |
+| Cases at or above 0.5 | 91% | 41% |
 | Exact family chosen | 87% | n/a |
 
 The misses with the font installed are near-twins: Avenir for Avenir Next, Arial for Helvetica. Overlap is strict: a correct face one pixel off scores well under 1.
