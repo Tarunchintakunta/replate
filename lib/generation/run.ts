@@ -73,14 +73,17 @@ async function run(
 		.get();
 	if (!image) return { status: 404, error: "Image not found." };
 
-	const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
-	const recent = db
-		.select({ n: count() })
-		.from(generations)
-		.where(and(eq(generations.userId, userId), gt(generations.createdAt, hourAgo)))
-		.get();
-	if ((recent?.n ?? 0) >= RATE_LIMIT_PER_HOUR) {
-		return { status: 429, error: "Too many attempts. Try again in an hour." };
+	// The limit exists so a loop cannot drain a paid key. The local editor has no key to drain.
+	if (providerName !== "local") {
+		const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
+		const recent = db
+			.select({ n: count() })
+			.from(generations)
+			.where(and(eq(generations.userId, userId), gt(generations.createdAt, hourAgo)))
+			.get();
+		if ((recent?.n ?? 0) >= RATE_LIMIT_PER_HOUR) {
+			return { status: 429, error: "Too many attempts. Try again in an hour." };
+		}
 	}
 
 	if (balanceOf(userId) < GENERATION_COST) {

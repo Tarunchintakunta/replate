@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { beforeAll, describe, expect, it } from "vitest";
 import { db } from "../../db/client";
 import { generations, images, users } from "../../db/schema";
-import { balanceOf, debitGeneration, grantTrial } from "./ledger";
+import { balanceOf, debitGeneration, grantLocalPack, grantTrial } from "./ledger";
 
 function newUser(): string {
 	const id = uuidv4();
@@ -81,5 +81,13 @@ describe("ledger", () => {
 			}),
 		).toThrow("Force rollback");
 		expect(balanceOf(userId)).toBe(10);
+	});
+
+	it("adds a local pack of 100 on top of the balance, every time it is asked", () => {
+		const userId = newUser();
+		db.transaction((tx) => grantTrial(userId, tx));
+		db.transaction((tx) => grantLocalPack(userId, tx));
+		db.transaction((tx) => grantLocalPack(userId, tx));
+		expect(balanceOf(userId)).toBe(210);
 	});
 });

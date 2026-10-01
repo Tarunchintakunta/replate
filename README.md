@@ -45,6 +45,17 @@ cp .env.example .env
 The local editor is strongest on screenshots, documents, and flat or gradient artwork.
 Text on a busy photo, on a curve, or in perspective is where a generative provider does better.
 
+## Credits
+
+`pnpm dev` listens on this Mac only (127.0.0.1), because the local sign-in has no password.
+
+A new user gets 10 trial credits and an image costs 10. On `http://localhost:3000` the
+passwordless local user can add 100 more for free from the Credits page. Everyone else
+buys the pack through Stripe test mode. The 10-attempts-per-hour limit guards paid keys,
+so it does not apply to the local editor.
+
+## Benchmark
+
 Measure the local editor against scenes with a known answer:
 
 ```bash

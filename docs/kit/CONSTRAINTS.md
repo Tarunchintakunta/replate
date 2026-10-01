@@ -43,5 +43,5 @@ These are the quality bar. A pull request that breaks one does not merge.
 - Accepted types: PNG, JPEG, WebP, checked by magic bytes after the multipart parse.
 - Output long edge 1024 for v1 provider calls.
 - Session cookie `httpOnly`, `sameSite=lax`, `secure` in production.
-- Rate limit generation to 10 attempts per user per hour in app code, even on localhost, so a loop cannot drain a live key.
+- Rate limit generation to 10 attempts per user per hour in app code, even on localhost, so a loop cannot drain a live key. The `local` editor has no key and is exempt.
 - Ownership check on every image and generation read.

@@ -27,3 +27,8 @@ export function appUrl(): string {
 export function localLoginAllowed(): boolean {
 	return appUrl() === "http://localhost:3000";
 }
+
+/** Free refills go to the passwordless local user and nobody else. */
+export function localCreditsAllowed(email: string): boolean {
+	return localLoginAllowed() && email === LOCAL_EMAIL;
+}
