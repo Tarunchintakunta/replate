@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "../../../../db/client";
-import { generations } from "../../../../db/schema";
+import { generations, images } from "../../../../db/schema";
 import { currentUser } from "../../../../lib/auth/current-user";
 import { getEditor, providerName } from "../../../../lib/editor";
 import type { ImageEditor } from "../../../../lib/editor/types";
@@ -67,8 +67,12 @@ export async function GET(request: Request) {
 			id: generations.id,
 			status: generations.status,
 			createdAt: generations.createdAt,
+			imageId: images.id,
+			width: images.width,
+			height: images.height,
 		})
 		.from(generations)
+		.innerJoin(images, eq(generations.imageId, images.id))
 		.where(eq(generations.userId, user.id))
 		.orderBy(desc(generations.createdAt))
 		.limit(limit)
@@ -79,6 +83,7 @@ export async function GET(request: Request) {
 			id: r.id,
 			status: r.status,
 			created_at: r.createdAt.toISOString(),
+			image: { id: r.imageId, width: r.width, height: r.height },
 		})),
 	});
 }

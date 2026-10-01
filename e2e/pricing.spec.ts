@@ -3,7 +3,7 @@ import { signIn } from "./signin";
 
 test("pricing shows the plain pack and is off without test keys", async ({ page }) => {
 	await signIn(page);
-	await page.getByRole("link", { name: "Credits" }).click();
+	await page.getByRole("link", { name: "Credits", exact: true }).click();
 
 	await expect(page).toHaveURL(/\/pricing$/);
 	await expect(page.getByText("100 credits", { exact: true })).toBeVisible();

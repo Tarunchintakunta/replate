@@ -26,13 +26,13 @@ export function TopBar({ account }: { account?: ReactNode }) {
 	}, []);
 
 	return (
-		<header className="h-[56px] border-b border-rule flex items-center justify-between px-4 shrink-0">
-			<div className="flex items-center">
+		<header className="h-[56px] border-b border-rule flex items-center justify-between gap-3 px-4 shrink-0">
+			<div className="flex items-center shrink-0">
 				<h1 className="font-display italic text-2xl font-semibold tracking-tight text-ink">
 					Replate
 				</h1>
 			</div>
-			<div className="flex items-center gap-4 text-sm">
+			<div className="flex items-center gap-2 sm:gap-4 text-sm min-w-0 whitespace-nowrap">
 				<div className="flex items-center gap-2">
 					<Link
 						href="/pricing"

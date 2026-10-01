@@ -20,7 +20,7 @@ Redrawing text is a typesetting problem when the words are known. OCR already gi
 
 | | True font installed | True font hidden |
 |---|---|---|
-| Mean glyph overlap (soft IoU) | 0.72 | 0.46 |
+| Mean glyph overlap (soft IoU) | 0.72 | 0.45 |
 | Cases at or above 0.5 | 91% | 41% |
 | Exact family chosen | 87% | n/a |
 

@@ -4,6 +4,7 @@ import {
 	type ChangeEvent,
 	type DragEvent,
 	type PointerEvent,
+	type ReactNode,
 	useRef,
 	useState,
 } from "react";
@@ -29,7 +30,11 @@ interface ImageStageProps {
 		width: number;
 		height: number;
 	}) => void;
+	/** Shown under the picture, beside the control that swaps it for another. */
+	children?: ReactNode;
 }
+
+const ACCEPT = "image/png,image/jpeg,image/webp";
 
 export function ImageStage({
 	image,
@@ -39,6 +44,7 @@ export function ImageStage({
 	selectedLineId,
 	onSelectLine,
 	onDrawBox,
+	children,
 }: ImageStageProps) {
 	const [uploading, setUploading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -78,6 +84,8 @@ export function ImageStage({
 
 	const onChange = (e: ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files?.[0]) handleFile(e.target.files[0]);
+		// Let the same file be chosen again.
+		e.target.value = "";
 	};
 
 	const getPointerPos = (e: PointerEvent) => {
@@ -138,15 +146,21 @@ export function ImageStage({
 			<div
 				onDragOver={(e) => e.preventDefault()}
 				onDrop={onDrop}
-				className="flex-1 border border-rule rounded-md border-dashed bg-wash flex flex-col items-center justify-center p-6 focus-within:ring-2 focus-within:ring-green focus-within:ring-offset-2 focus-within:ring-offset-paper transition-shadow"
+				className="flex-1 min-h-[220px] border border-rule rounded-md border-dashed bg-wash flex flex-col items-center justify-center p-6 focus-within:ring-2 focus-within:ring-green focus-within:ring-offset-2 focus-within:ring-offset-paper transition-shadow"
 			>
 				<label className="cursor-pointer text-center flex flex-col items-center w-full h-full justify-center">
 					<span className="text-ink font-medium">
 						{uploading ? "Uploading..." : "Drop a PNG, JPG, or WebP."}
 					</span>
+					{!uploading && (
+						<span className="text-sm text-ink opacity-70 mt-1">
+							Or click to choose a file. Up to 8 MB.
+						</span>
+					)}
 					{error && <span className="text-danger text-sm mt-2">{error}</span>}
 					<input
 						type="file"
+						accept={ACCEPT}
 						onChange={onChange}
 						className="sr-only"
 						aria-label="Drop a PNG, JPG, or WebP."
@@ -163,7 +177,12 @@ export function ImageStage({
 	const displayDrawH = Math.abs(currentY - startY);
 
 	return (
-		<div className="w-full flex justify-center">
+		// biome-ignore lint/a11y/noStaticElementInteractions: drag drop wrapper
+		<div
+			className="w-full flex flex-col items-center gap-2"
+			onDragOver={(e) => e.preventDefault()}
+			onDrop={onDrop}
+		>
 			{/* Frame is exactly the image's aspect ratio, capped at 75vh tall, so the
 			    <img>, the SVG overlay and pointer mapping all share one rect. */}
 			<div
@@ -231,6 +250,20 @@ export function ImageStage({
 					</svg>
 				)}
 			</div>
+			<div className="w-full flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm text-ink">
+				<div className="flex items-center gap-4">{children}</div>
+				<label className="cursor-pointer underline underline-offset-2 rounded focus-within:ring-2 focus-within:ring-green">
+					{uploading ? "Uploading..." : "Choose another picture"}
+					<input
+						type="file"
+						accept={ACCEPT}
+						onChange={onChange}
+						className="sr-only"
+						disabled={uploading}
+					/>
+				</label>
+			</div>
+			{error && <p className="w-full text-sm text-danger">{error}</p>}
 		</div>
 	);
 }

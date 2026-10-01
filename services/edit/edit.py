@@ -238,6 +238,18 @@ def word_spans(alpha):
     return list(zip(np.concatenate((starts[:1], starts[1:][split])), np.concatenate((ends[:-1][split], ends[-1:]))))
 
 
+def closed(alpha):
+    """The glyphs with every blank column removed, so spacing no longer counts."""
+    kept = alpha[:, alpha.max(axis=0) > 0.1]
+    return kept if kept.shape[1] else alpha
+
+
+def spaced_like(alpha, text):
+    """True when the glyphs show as many words as the text has. OCR drops and invents
+    spaces ("June 14-16" for "June 14 - 16"); then widths are compared with gaps closed."""
+    return len(text.split()) == len(word_spans(alpha))
+
+
 def overlap(a, b):
     """Soft IoU (0..1) of two coverage maps after stretching `b` onto `a`."""
     b = cv2.resize(b, (a.shape[1], a.shape[0]), interpolation=cv2.INTER_AREA)
@@ -286,31 +298,44 @@ def head(old, text, limit=40):
 def match_font(old, text, faces):
     """Faces ranked by how well their rendering of `text` matches the old glyphs."""
     old, text = head(old, text)
+    # With the spacing in doubt a face is also scored with every gap closed, and keeps
+    # the better of the two: either OCR got a space wrong or the glyphs just sit apart.
+    doubt = not spaced_like(old, text)
+    old_closed = closed(old)
     old_aspect = old.shape[1] / old.shape[0]
-    old_density = float(old.mean())
+
+    def score(a, b):
+        wide_a, wide_b = a.shape[1] / a.shape[0], b.shape[1] / b.shape[0]
+        shape = min(wide_a, wide_b) / max(wide_a, wide_b)
+        if shape < 0.8:
+            return 0.0
+        # Overlap alone favors heavy faces (a bold stroke covers a misplaced thin one),
+        # so the amount of ink has to agree too.
+        ink_a, ink_b = float(a.mean()), float(b.mean())
+        return similarity(a, b) * shape * min(ink_a, ink_b) / max(ink_a, ink_b)
+
     ranked = []
     for face in faces:
         try:
             font = load(face, REF)
-            # Cheap outline metrics first: most faces are the wrong shape and never get drawn.
+            # Cheap outline metrics first: most faces are the wrong shape and never get
+            # drawn. With the spacing in doubt the outline width proves less.
             left, top, right, bottom = font.getbbox(text, anchor="ls")
-            if bottom <= top or not 0.85 < (right - left) / (bottom - top) / old_aspect < 1.18:
+            if bottom <= top:
+                continue
+            ratio = (right - left) / (bottom - top) / old_aspect
+            if not (0.6 < ratio < 1.18 if doubt else 0.85 < ratio < 1.18):
                 continue
             drawn = raster(font, text)
         except Exception:
             continue
         if drawn is None:
             continue
-        new, _ = drawn
-        aspect = new.shape[1] / new.shape[0]
-        shape = min(aspect, old_aspect) / max(aspect, old_aspect)
-        if shape < 0.8:
-            continue
-        # Overlap alone favors heavy faces (a bold stroke covers a misplaced thin one),
-        # so the amount of ink has to agree too.
-        density = float(new.mean())
-        weight = min(density, old_density) / max(density, old_density)
-        ranked.append((similarity(old, new) * shape * weight, face))
+        best = score(old, drawn[0])
+        if doubt:
+            best = max(best, score(old_closed, closed(drawn[0])))
+        if best > 0:
+            ranked.append((best, face))
     ranked.sort(key=lambda r: -r[0])
     return ranked
 
@@ -459,6 +484,9 @@ def replace(img, r, faces):
     stretch = 1.0
     if reference == old_text:
         stretch = (ix1 - ix0) / sized[0].shape[1]
+        if not 0.93 < stretch < 1.07 and not spaced_like(old, old_text):
+            # A space OCR got wrong would read as a wrong width; measure with gaps closed.
+            stretch = closed(old).shape[1] / closed(sized[0]).shape[1]
         if 0.93 < stretch < 1.07:
             # Right face: the line's width measures the size far better than its height,
             # which is only a dozen pixels on small text.
@@ -490,13 +518,21 @@ def replace(img, r, faces):
         pen = (ix0 + ix1) / 2 - width / 2 - left * stretch
     start = round(pen + left * stretch)
     # Longer words must not run into what follows on the line (a timestamp, the edge of
-    # a chat bubble). On a flat background the next non-background column is the limit.
+    # a chat bubble, the next word of a headline).
     room = W - 2 - start
-    if found["flat"] is not None and not centered:
+    if not centered:
+        # A column is taken when its pixels disagree with each other (glyphs on a flat
+        # or gradient ground) or, on a flat ground, when it is another color entirely.
         band = img[iy0:iy1, ix1:W].astype(np.float32)
-        busy = np.flatnonzero((np.linalg.norm(band - found["flat"], axis=2) > MIN_CONTRAST).any(axis=0))
-        if len(busy):
-            room = min(room, ix1 + int(busy[0]) - (iy1 - iy0) // 2 - start)
+        column = np.median(band, axis=0)
+        taken = np.linalg.norm(band - column, axis=2).max(axis=0) > MIN_CONTRAST
+        if found["flat"] is not None:
+            taken |= np.linalg.norm(column - found["flat"], axis=1) > MIN_CONTRAST
+        hits = np.flatnonzero(taken)
+        # Off a flat ground, a taken column right at the old words' edge is texture,
+        # and texture says nothing about room.
+        if len(hits) and (found["flat"] is not None or hits[0] > (iy1 - iy0) // 4):
+            room = min(room, ix1 + int(hits[0]) - (iy1 - iy0) // 2 - start)
     room = max(room, ix1 - ix0)
     # ponytail: text shrinks to fit, down to 60%; it never wraps or grows the bubble.
     fit = max(min(1.0, room / width), 0.6)

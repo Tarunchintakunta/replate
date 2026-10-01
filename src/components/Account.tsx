@@ -12,7 +12,9 @@ export async function Account() {
 			}}
 			className="flex items-center gap-2"
 		>
-			<span className="text-ink opacity-70">{session.user.email}</span>
+			<span className="hidden sm:inline text-ink opacity-70 truncate">
+				{session.user.email}
+			</span>
 			<button
 				type="submit"
 				className="text-ink underline underline-offset-2 rounded focus:outline-none focus:ring-2 focus:ring-green"
