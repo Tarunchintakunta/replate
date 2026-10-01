@@ -297,15 +297,36 @@ def match_font(old, text, faces):
     return ranked
 
 
+_ocr_lines = {}  # id(image) -> lines of the whole image, read once per edit
+
+
 def read_text(img, x, y, w, h):
-    """OCR one box. Used for a drawn box, where the client has no old text to send."""
+    """The words inside a box, for a drawn box where the client has no old text to send.
+
+    Whole-image OCR reads far better than a tight crop, so lines that sit inside the box
+    come from there. A box around part of a line falls back to reading the crop.
+    """
     try:
         from rapidocr_onnxruntime import RapidOCR
 
+        engine = RapidOCR()
+        if id(img) not in _ocr_lines:
+            result, _ = engine(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+            _ocr_lines[id(img)] = [
+                (min(p[0] for p in box), min(p[1] for p in box), max(p[0] for p in box), max(p[1] for p in box), text)
+                for box, text, _ in result or []
+            ]
+        m = max(6, h // 3)
+        inside = [
+            (x0, text)
+            for x0, y0, x1, y1, text in _ocr_lines[id(img)]
+            if x0 >= x - m and y0 >= y - m and x1 <= x + w + m and y1 <= y + h + m
+        ]
+        if inside:
+            return " ".join(text for _, text in sorted(inside)).strip()
         H, W = img.shape[:2]
-        m = max(8, h // 2)
         crop = img[max(y - m, 0) : min(y + h + m, H), max(x - m, 0) : min(x + w + m, W)]
-        result, _ = RapidOCR()(cv2.cvtColor(crop, cv2.COLOR_RGB2BGR))
+        result, _ = engine(cv2.cvtColor(crop, cv2.COLOR_RGB2BGR))
         return " ".join(item[1] for item in result or []).strip()
     except Exception:
         return ""
@@ -390,7 +411,9 @@ def replace(img, r, faces):
     ix0, iy0, ix1, iy1 = found["ink"]
     old = found["alpha"][iy0 - y : iy1 - y, ix0 - x : ix1 - x]
     if not old_text and new_text:
-        old_text = read_text(img, x, y, w, h)
+        # Read the glyphs, not the drawn box: a hand-drawn box is loose and its
+        # surroundings hold other words (a timestamp). Read before erasing.
+        old_text = read_text(img, ix0, iy0, ix1 - ix0, iy1 - iy0)
 
     erase(img, x, y, w, h, found["erase"], found["fill"])
     if not new_text:
