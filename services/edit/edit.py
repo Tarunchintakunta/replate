@@ -490,13 +490,21 @@ def replace(img, r, faces):
         pen = (ix0 + ix1) / 2 - width / 2 - left * stretch
     start = round(pen + left * stretch)
     # Longer words must not run into what follows on the line (a timestamp, the edge of
-    # a chat bubble). On a flat background the next non-background column is the limit.
+    # a chat bubble, the next word of a headline).
     room = W - 2 - start
-    if found["flat"] is not None and not centered:
+    if not centered:
+        # A column is taken when its pixels disagree with each other (glyphs on a flat
+        # or gradient ground) or, on a flat ground, when it is another color entirely.
         band = img[iy0:iy1, ix1:W].astype(np.float32)
-        busy = np.flatnonzero((np.linalg.norm(band - found["flat"], axis=2) > MIN_CONTRAST).any(axis=0))
-        if len(busy):
-            room = min(room, ix1 + int(busy[0]) - (iy1 - iy0) // 2 - start)
+        column = np.median(band, axis=0)
+        taken = np.linalg.norm(band - column, axis=2).max(axis=0) > MIN_CONTRAST
+        if found["flat"] is not None:
+            taken |= np.linalg.norm(column - found["flat"], axis=1) > MIN_CONTRAST
+        hits = np.flatnonzero(taken)
+        # Off a flat ground, a taken column right at the old words' edge is texture,
+        # and texture says nothing about room.
+        if len(hits) and (found["flat"] is not None or hits[0] > (iy1 - iy0) // 4):
+            room = min(room, ix1 + int(hits[0]) - (iy1 - iy0) // 2 - start)
     room = max(room, ix1 - ix0)
     # ponytail: text shrinks to fit, down to 60%; it never wraps or grows the bubble.
     fit = max(min(1.0, room / width), 0.6)
