@@ -1,8 +1,7 @@
 import { eq } from "drizzle-orm";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { v4 as uuidv4 } from "uuid";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { db, sqlite } from "../../db/client";
+import { describe, expect, it } from "vitest";
+import { db } from "../../db/client";
 import { images, users } from "../../db/schema";
 import { generationKey, originalKey, readPng, writePng } from "./store";
 
@@ -12,15 +11,6 @@ const TRANSPARENT_PIXEL = Buffer.from(
 );
 
 describe("storage", () => {
-	beforeAll(() => {
-		// Run migrations on the temp db
-		migrate(db, { migrationsFolder: "db/migrations" });
-	});
-
-	afterAll(() => {
-		sqlite.close();
-	});
-
 	it("rejects a key that contains ..", async () => {
 		await expect(writePng("../foo.png", TRANSPARENT_PIXEL)).rejects.toThrow(
 			"Path traversal detected",

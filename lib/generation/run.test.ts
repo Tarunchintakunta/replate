@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { eq } from "drizzle-orm";
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
 import { describe, expect, it, vi } from "vitest";
@@ -13,11 +14,9 @@ import { type GenerationRequest, runGeneration } from "./run";
 
 async function setup(opts: { trial?: boolean } = {}) {
 	const userId = uuidv4();
-	db.transaction((tx) => {
-		tx.insert(users)
-			.values({ id: userId, email: `${userId}@example.com`, name: "T", createdAt: new Date() })
-			.run();
-		if (opts.trial !== false) grantTrial(userId, tx);
+	await db.transaction(async (tx) => {
+		await tx.insert(users).values({ id: userId, email: `${userId}@example.com`, name: "T", createdAt: new Date() });
+		if (opts.trial !== false) await grantTrial(userId, tx);
 	});
 	const imageId = uuidv4();
 	const png = await sharp({
@@ -26,16 +25,14 @@ async function setup(opts: { trial?: boolean } = {}) {
 		.png()
 		.toBuffer();
 	await writePng(originalKey(imageId), png);
-	db.insert(images)
-		.values({
+	await db.insert(images).values({
 			id: imageId,
 			userId,
 			width: 200,
 			height: 100,
 			storageKey: originalKey(imageId),
 			createdAt: new Date(),
-		})
-		.run();
+		});
 	const body: GenerationRequest = {
 		imageId,
 		lines: [
@@ -62,7 +59,7 @@ describe("runGeneration", () => {
 		expect(result.status).toBe(200);
 		if (result.status !== 200) return;
 		expect(fs.existsSync(outputPath(result.generationId))).toBe(true);
-		expect(balanceOf(userId)).toBe(0);
+		expect(await balanceOf(userId)).toBe(0);
 	});
 
 	it("leaves the balance at 10 and writes a failed row when the editor throws", async () => {
@@ -70,8 +67,8 @@ describe("runGeneration", () => {
 		const result = await runGeneration(userId, body, new ThrowingEditor(), "mock");
 
 		expect(result.status).toBe(502);
-		expect(balanceOf(userId)).toBe(10);
-		const rows = db.select().from(generations).all().filter((g) => g.userId === userId);
+		expect(await balanceOf(userId)).toBe(10);
+		const rows = await db.select().from(generations).where(eq(generations.userId, userId));
 		expect(rows).toHaveLength(1);
 		expect(rows[0].status).toBe("failed");
 		expect(rows[0].error).toContain("provider exploded");
@@ -99,7 +96,7 @@ describe("runGeneration", () => {
 		const result = await runGeneration(userId, body, editor, "mock");
 		expect(result.status).toBe(429);
 		expect(spy).not.toHaveBeenCalled();
-		expect(balanceOf(userId)).toBe(10);
+		expect(await balanceOf(userId)).toBe(10);
 	});
 
 	it("does not rate limit the local provider, which has no key to drain", async () => {
@@ -109,7 +106,7 @@ describe("runGeneration", () => {
 		}
 		const result = await runGeneration(userId, body, new MockEditor(), "local");
 		expect(result.status).toBe(200);
-		expect(balanceOf(userId)).toBe(0);
+		expect(await balanceOf(userId)).toBe(0);
 	});
 
 	it("returns 404 for another user's image", async () => {

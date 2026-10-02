@@ -7,11 +7,11 @@ import { creditPack } from "../credits/ledger";
 export type WebhookResult = { status: 200 | 400; message: string };
 
 /** Verify a Stripe webhook and credit the pack once per event id. */
-export function handleStripeWebhook(
+export async function handleStripeWebhook(
 	rawBody: string,
 	signature: string | null,
 	secret: string,
-): WebhookResult {
+): Promise<WebhookResult> {
 	let event: Stripe.Event;
 	try {
 		event = Stripe.webhooks.constructEvent(rawBody, signature ?? "", secret);
@@ -29,15 +29,21 @@ export function handleStripeWebhook(
 		return { status: 200, message: "Not a paid pack" };
 	}
 
-	return db.transaction((tx) => {
-		if (!tx.select().from(users).where(eq(users.id, userId)).get()) {
+	return db.transaction(async (tx) => {
+		const [user] = await tx.select().from(users).where(eq(users.id, userId));
+		if (!user) {
 			return { status: 200 as const, message: "Unknown user" };
 		}
-		if (tx.select().from(stripeEvents).where(eq(stripeEvents.id, event.id)).get()) {
+		// The primary key makes a replayed event a no-op, even when two arrive at once.
+		const inserted = await tx
+			.insert(stripeEvents)
+			.values({ id: event.id, receivedAt: new Date() })
+			.onConflictDoNothing()
+			.returning({ id: stripeEvents.id });
+		if (inserted.length === 0) {
 			return { status: 200 as const, message: "Already processed" };
 		}
-		tx.insert(stripeEvents).values({ id: event.id, receivedAt: new Date() }).run();
-		creditPack(userId, event.id, tx);
+		await creditPack(userId, event.id, tx);
 		return { status: 200 as const, message: "Credited" };
 	});
 }

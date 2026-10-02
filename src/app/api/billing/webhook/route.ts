@@ -11,7 +11,7 @@ export async function POST(request: Request) {
 	}
 
 	// The signature covers the exact bytes, so read the raw body.
-	const result = handleStripeWebhook(
+	const result = await handleStripeWebhook(
 		await request.text(),
 		request.headers.get("stripe-signature"),
 		secret,

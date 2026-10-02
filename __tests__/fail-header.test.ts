@@ -15,7 +15,7 @@ vi.mock("../lib/auth/current-user", () => ({
 const { POST } = await import("../src/app/api/generations/route");
 
 async function request() {
-	const user = ensureUser(`${uuidv4()}@example.com`, "T");
+	const user = await ensureUser(`${uuidv4()}@example.com`, "T");
 	session.user = user;
 	const imageId = uuidv4();
 	await writePng(
@@ -26,16 +26,14 @@ async function request() {
 			.png()
 			.toBuffer(),
 	);
-	db.insert(images)
-		.values({
-			id: imageId,
-			userId: user.id,
-			width: 100,
-			height: 50,
-			storageKey: originalKey(imageId),
-			createdAt: new Date(),
-		})
-		.run();
+	await db.insert(images).values({
+		id: imageId,
+		userId: user.id,
+		width: 100,
+		height: 50,
+		storageKey: originalKey(imageId),
+		createdAt: new Date(),
+	});
 	const req = new Request("http://localhost/api/generations", {
 		method: "POST",
 		headers: { "x-replate-fail": "1" },
@@ -61,13 +59,13 @@ describe("x-replate-fail", () => {
 		vi.stubEnv("NODE_ENV", "test");
 		const { user, req } = await request();
 		expect((await POST(req)).status).toBe(502);
-		expect(balanceOf(user.id)).toBe(10);
+		expect(await balanceOf(user.id)).toBe(10);
 	});
 
 	it("is ignored in development", async () => {
 		vi.stubEnv("NODE_ENV", "development");
 		const { user, req } = await request();
 		expect((await POST(req)).status).toBe(200);
-		expect(balanceOf(user.id)).toBe(0);
+		expect(await balanceOf(user.id)).toBe(0);
 	});
 });

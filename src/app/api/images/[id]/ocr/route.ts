@@ -17,11 +17,10 @@ export async function POST(
 	}
 	const { id } = await params;
 
-	const image = db
+	const [image] = await db
 		.select()
 		.from(images)
-		.where(and(eq(images.id, id), eq(images.userId, user.id)))
-		.get();
+		.where(and(eq(images.id, id), eq(images.userId, user.id)));
 
 	if (!image) {
 		return new NextResponse("Not found", { status: 404 });
@@ -34,32 +33,28 @@ export async function POST(
 		);
 		const lines = await runOcr(fullPath, image.width, image.height);
 
-		// better-sqlite3 transactions must be synchronous.
-		db.transaction((tx) => {
-			tx.delete(ocrLines).where(eq(ocrLines.imageId, id)).run();
+		await db.transaction(async (tx) => {
+			await tx.delete(ocrLines).where(eq(ocrLines.imageId, id));
 			if (lines.length > 0) {
-				tx.insert(ocrLines)
-					.values(
-						lines.map((line) => ({
-							id: uuidv4(),
-							imageId: id,
-							text: line.text,
-							confidence: line.confidence,
-							x: line.x,
-							y: line.y,
-							width: line.width,
-							height: line.height,
-						})),
-					)
-					.run();
+				await tx.insert(ocrLines).values(
+					lines.map((line) => ({
+						id: uuidv4(),
+						imageId: id,
+						text: line.text,
+						confidence: line.confidence,
+						x: line.x,
+						y: line.y,
+						width: line.width,
+						height: line.height,
+					})),
+				);
 			}
 		});
 
-		const storedLines = db
+		const storedLines = await db
 			.select()
 			.from(ocrLines)
-			.where(eq(ocrLines.imageId, id))
-			.all();
+			.where(eq(ocrLines.imageId, id));
 
 		return NextResponse.json({ lines: storedLines });
 	} catch (err) {
