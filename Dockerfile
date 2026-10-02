@@ -26,5 +26,5 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build
 
-# The host sets PORT.
-CMD ["pnpm", "exec", "next", "start", "-H", "0.0.0.0"]
+# The host sets PORT and DATABASE_URL. Migrations run before the server takes traffic.
+CMD ["sh", "-c", "pnpm exec tsx db/migrate.ts && exec pnpm exec next start -H 0.0.0.0"]
