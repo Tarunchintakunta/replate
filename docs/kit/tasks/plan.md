@@ -24,6 +24,7 @@ Order is the issue number. Do not parallelize. Each slice is one session and one
 | 18 | Desk polish | Upload detects by itself, a second picture needs no reload, the phone layout fits, OCR reads a headline whole |
 | 19 | Container | `docker build .` runs the full loop with data on a volume, ready for a container host |
 | 20 | Migration race | Parallel build workers open one new database without failing |
+| 21 | Postgres and accounts | Neon holds the data; people sign up with a username and password |
 
 Issues 09 and 10 are adapters behind the interface from 06. They do not change the UI except the provider pill.
 

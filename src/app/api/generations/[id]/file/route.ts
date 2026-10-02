@@ -15,11 +15,10 @@ export async function GET(
 	}
 	const { id } = await params;
 
-	const row = db
+	const [row] = await db
 		.select()
 		.from(generations)
-		.where(and(eq(generations.id, id), eq(generations.userId, user.id)))
-		.get();
+		.where(and(eq(generations.id, id), eq(generations.userId, user.id)));
 	if (!row?.outputKey) {
 		return new NextResponse("Not found", { status: 404 });
 	}

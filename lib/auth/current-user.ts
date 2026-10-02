@@ -9,5 +9,6 @@ export async function currentUser() {
 	const session = await auth();
 	const id = session?.user?.id;
 	if (!id) return null;
-	return db.select().from(users).where(eq(users.id, id)).get() ?? null;
+	const [user] = await db.select().from(users).where(eq(users.id, id));
+	return user ?? null;
 }

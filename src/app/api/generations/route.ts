@@ -62,7 +62,7 @@ export async function GET(request: Request) {
 	const limit =
 		Number.isInteger(requested) && requested > 0 ? Math.min(requested, 50) : 20;
 
-	const rows = db
+	const rows = await db
 		.select({
 			id: generations.id,
 			status: generations.status,
@@ -75,8 +75,7 @@ export async function GET(request: Request) {
 		.innerJoin(images, eq(generations.imageId, images.id))
 		.where(eq(generations.userId, user.id))
 		.orderBy(desc(generations.createdAt))
-		.limit(limit)
-		.all();
+		.limit(limit);
 
 	return NextResponse.json({
 		generations: rows.map((r) => ({

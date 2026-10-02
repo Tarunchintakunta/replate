@@ -24,8 +24,8 @@ const { GET: generationFileGet } = await import(
 	"../src/app/api/generations/[id]/file/route"
 );
 
-const owner = ensureUser(`${uuidv4()}@example.com`, "Owner");
-const stranger = ensureUser(`${uuidv4()}@example.com`, "Stranger");
+const owner = await ensureUser(`${uuidv4()}@example.com`, "Owner");
+const stranger = await ensureUser(`${uuidv4()}@example.com`, "Stranger");
 const imageId = uuidv4();
 const generationId = uuidv4();
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
@@ -49,28 +49,24 @@ const replaceBody = {
 beforeAll(async () => {
 	await writePng(originalKey(imageId), Buffer.from("png"));
 	await writePng(generationKey(generationId), Buffer.from("png"));
-	db.insert(images)
-		.values({
-			id: imageId,
-			userId: owner.id,
-			width: 1,
-			height: 1,
-			storageKey: originalKey(imageId),
-			createdAt: new Date(),
-		})
-		.run();
-	db.insert(generations)
-		.values({
-			id: generationId,
-			userId: owner.id,
-			imageId,
-			provider: "mock",
-			model: "mock",
-			status: "succeeded",
-			outputKey: generationKey(generationId),
-			createdAt: new Date(),
-		})
-		.run();
+	await db.insert(images).values({
+		id: imageId,
+		userId: owner.id,
+		width: 1,
+		height: 1,
+		storageKey: originalKey(imageId),
+		createdAt: new Date(),
+	});
+	await db.insert(generations).values({
+		id: generationId,
+		userId: owner.id,
+		imageId,
+		provider: "mock",
+		model: "mock",
+		status: "succeeded",
+		outputKey: generationKey(generationId),
+		createdAt: new Date(),
+	});
 });
 
 describe("routes without a session", () => {

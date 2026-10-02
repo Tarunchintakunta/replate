@@ -7,11 +7,11 @@
 | App | Next.js 15 App Router, React 19, TypeScript strict |
 | UI | Tailwind CSS v4. Radix primitives only where a control needs a keyboard dialog or menu. No component marketplace. |
 | Validation | Zod |
-| Database | SQLite via Drizzle and `better-sqlite3` |
+| Database | Postgres via Drizzle: Neon over `pg` when `DATABASE_URL` is a `postgres://` URL, otherwise in-process `@electric-sql/pglite` (tests, offline). See ADR 007 |
 | Images | `sharp` for decode, resize, EXIF strip, PNG encode |
 | OCR | Python 3.12 venv, `rapidocr-onnxruntime`, script `services/ocr/ocr.py` |
 | Editor | Server-only interface. Implementations: mock, local (OpenCV and installed fonts, `services/edit/edit.py`), Gemini, WaveSpeed |
-| Auth | Auth.js. Dev credentials provider always. Google provider only if env is set. |
+| Auth | Auth.js. Username and password (scrypt hashes in `users`). The passwordless local button only on `http://localhost:3000`. |
 | Payments | Stripe test mode, Checkout, one pack |
 | Tests | Vitest and Playwright |
 | Lint and format | Biome |
@@ -25,7 +25,7 @@ Versions float to current stable at the time Claude scaffolds. Pin them in the l
 ```
 Browser
   → Next.js (pnpm dev) on localhost
-      → SQLite file in data/replate.db
+      → Postgres (Neon)
       → image files in storage/
       → python services/ocr/ocr.py
       → HTTPS to Gemini or WaveSpeed only when that provider is selected
@@ -96,10 +96,10 @@ Do not send the user’s other files. Do not log the image bytes.
 
 ```
 users
-  id, email, name, created_at
+  id, email (local button), username, password_hash, name, created_at
 
 sessions
-  owned by Auth.js
+  a signed JWT cookie; no table
 
 images
   id, user_id, width, height, storage_key, created_at

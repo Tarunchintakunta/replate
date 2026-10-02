@@ -1,6 +1,6 @@
 # ADR 006 — One container for a hosted copy
 
-Date: 2026-10-02. Status: accepted.
+Date: 2026-10-02. Status: accepted. The database and sign-in rows are superseded by ADR 007.
 
 ## Decision
 

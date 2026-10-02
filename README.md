@@ -78,7 +78,7 @@ The `Dockerfile` runs the whole app, OCR and the local editor included. Keep the
 
 ```bash
 docker build -t replate .
-docker run -p 3000:3000 -e PORT=3000 -e AUTH_SECRET=change-me -e DATABASE_URL=/data/replate.db -e STORAGE_PATH=/data/storage -e EDITOR_PROVIDER=local -v replate-data:/data replate
+docker run -p 3000:3000 -e PORT=3000 -e AUTH_SECRET=change-me -e DATABASE_URL=postgres://... -e STORAGE_PATH=/data/storage -e EDITOR_PROVIDER=local -v replate-data:/data replate
 ```
 
-A hosted copy needs `APP_URL` set to its `https://` address and Google sign-in keys; the local button only exists on `http://localhost:3000`. Railway reads `railway.json`. Vercel cannot run the app itself because it has no disk and no Python beside Node. See `docs/kit/adr/006-hosted-copy.md`.
+A hosted copy needs `APP_URL` set to its `https://` address and `DATABASE_URL` set to a Neon `postgres://` URL. People sign up with a username and password; the local button only exists on `http://localhost:3000`. Railway reads `railway.json`. Vercel cannot run the app itself because it has no disk and no Python beside Node. See `docs/kit/adr/006-hosted-copy.md`.

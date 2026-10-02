@@ -66,27 +66,25 @@ async function run(
 	editor: ImageEditor,
 	providerName: string,
 ): Promise<GenerationResult> {
-	const image = db
+	const [image] = await db
 		.select()
 		.from(images)
-		.where(and(eq(images.id, body.imageId), eq(images.userId, userId)))
-		.get();
+		.where(and(eq(images.id, body.imageId), eq(images.userId, userId)));
 	if (!image) return { status: 404, error: "Image not found." };
 
 	// The limit exists so a loop cannot drain a paid key. The local editor has no key to drain.
 	if (providerName !== "local") {
 		const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
-		const recent = db
+		const [recent] = await db
 			.select({ n: count() })
 			.from(generations)
-			.where(and(eq(generations.userId, userId), gt(generations.createdAt, hourAgo)))
-			.get();
+			.where(and(eq(generations.userId, userId), gt(generations.createdAt, hourAgo)));
 		if ((recent?.n ?? 0) >= RATE_LIMIT_PER_HOUR) {
 			return { status: 429, error: "Too many attempts. Try again in an hour." };
 		}
 	}
 
-	if (balanceOf(userId) < GENERATION_COST) {
+	if ((await balanceOf(userId)) < GENERATION_COST) {
 		return { status: 402, error: "No credits left." };
 	}
 
@@ -104,8 +102,7 @@ async function run(
 		}
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
-		db.insert(generations)
-			.values({
+		await db.insert(generations).values({
 				id: generationId,
 				userId,
 				imageId: image.id,
@@ -113,9 +110,8 @@ async function run(
 				model: "",
 				status: "failed",
 				error: message,
-				createdAt,
-			})
-			.run();
+			createdAt,
+		});
 		return { status: 502, error: `The edit failed: ${message}. Try again.` };
 	}
 
@@ -127,40 +123,36 @@ async function run(
 	const known = new Set(
 		claimed.length === 0
 			? []
-			: db
-					.select({ id: ocrLines.id })
-					.from(ocrLines)
-					.where(and(eq(ocrLines.imageId, image.id), inArray(ocrLines.id, claimed)))
-					.all()
-					.map((r) => r.id),
+			: (
+					await db
+						.select({ id: ocrLines.id })
+						.from(ocrLines)
+						.where(and(eq(ocrLines.imageId, image.id), inArray(ocrLines.id, claimed)))
+				).map((r) => r.id),
 	);
 
 	try {
-		db.transaction((tx) => {
-			tx.insert(generations)
-				.values({
+		await db.transaction(async (tx) => {
+			await tx.insert(generations).values({
 					id: generationId,
 					userId,
 					imageId: image.id,
 					provider: output.provider,
 					model: output.model,
 					status: "succeeded",
-					outputKey,
-					createdAt,
-				})
-				.run();
-			tx.insert(generationReplacements)
-				.values(
+				outputKey,
+				createdAt,
+			});
+			await tx.insert(generationReplacements).values(
 					body.lines.map((l) => ({
 						generationId,
 						ocrLineId: l.lineId && known.has(l.lineId) ? l.lineId : null,
 						fromText: l.from,
 						toText: l.to,
 						...l.box,
-					})),
-				)
-				.run();
-			debitGeneration(userId, generationId, tx);
+				})),
+			);
+			await debitGeneration(userId, generationId, tx);
 		});
 	} catch (err) {
 		await deletePng(outputKey);

@@ -29,12 +29,12 @@ export default defineConfig({
 	],
 	webServer: {
 		// NODE_ENV in `env` below gets replaced before next starts, so set it in the command.
-		command: `NODE_ENV=test pnpm exec next dev --port ${PORT}`,
+		command: `pnpm exec tsx db/migrate.ts && NODE_ENV=test pnpm exec next dev --port ${PORT}`,
 		url: `http://localhost:${PORT}`,
 		reuseExistingServer: false,
 		timeout: 120_000,
 		env: {
-			DATABASE_URL: path.join(runDir, "e2e.db"),
+			DATABASE_URL: path.join(runDir, "pglite"),
 			STORAGE_PATH: path.join(runDir, "storage"),
 			EDITOR_PROVIDER: "mock",
 			OCR_MODE: "fixture",
