@@ -13,7 +13,7 @@ export async function Account() {
 			className="flex items-center gap-2"
 		>
 			<span className="hidden sm:inline text-ink opacity-70 truncate">
-				{session.user.email}
+				{session.user.email ?? session.user.name}
 			</span>
 			<button
 				type="submit"

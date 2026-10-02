@@ -2,15 +2,15 @@ import "server-only";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import NextAuth from "next-auth";
-import type { Provider } from "next-auth/providers";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
 import {
 	appUrl,
 	ensureUser,
 	LOCAL_EMAIL,
 	localLoginAllowed,
+	login,
+	register,
 } from "../lib/auth/users";
 
 // Without AUTH_SECRET in .env, keep a random one in data/ (gitignored) so a
@@ -28,34 +28,87 @@ function secret(): string {
 	}
 }
 
-const providers: Provider[] = [
-	Credentials({
-		id: "local",
-		name: "Local",
-		credentials: {},
-		// No password: this is the localhost bridge. Refused on any other origin.
-		authorize: async () =>
-			localLoginAllowed() ? { email: LOCAL_EMAIL, name: "Local Dev" } : null,
-	}),
-];
-if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) {
-	providers.push(Google);
+/** Carries a message the sign-in page can show. Auth.js passes `code` through. */
+class AccountError extends CredentialsSignin {
+	constructor(message: string) {
+		super();
+		this.code = message;
+	}
 }
 
-export const googleEnabled = providers.length > 1;
+// ponytail: in-process counter, right for one container. Move to the database if the
+// app ever runs on more than one instance.
+const FAILURE_LIMIT = 10;
+const FAILURE_WINDOW_MS = 15 * 60 * 1000;
+const failures = new Map<string, { count: number; since: number }>();
+
+function tooManyFailures(username: string): boolean {
+	const entry = failures.get(username);
+	if (!entry || Date.now() - entry.since > FAILURE_WINDOW_MS) return false;
+	return entry.count >= FAILURE_LIMIT;
+}
+
+function noteFailure(username: string) {
+	const entry = failures.get(username);
+	if (!entry || Date.now() - entry.since > FAILURE_WINDOW_MS) {
+		failures.set(username, { count: 1, since: Date.now() });
+	} else {
+		entry.count += 1;
+	}
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
 	secret: secret(),
 	trustHost: true,
 	useSecureCookies: appUrl().startsWith("https://"),
 	session: { strategy: "jwt" },
-	providers,
+	providers: [
+		Credentials({
+			id: "local",
+			name: "Local",
+			credentials: {},
+			// No password: this is the localhost bridge. Refused on any other origin.
+			authorize: async () => {
+				if (!localLoginAllowed()) return null;
+				const user = await ensureUser(LOCAL_EMAIL, "Local Dev");
+				return { id: user.id, email: LOCAL_EMAIL, name: user.name };
+			},
+		}),
+		Credentials({
+			id: "password",
+			name: "Username and password",
+			credentials: { username: {}, password: {}, intent: {} },
+			authorize: async (given) => {
+				const username = String(given.username ?? "")
+					.trim()
+					.toLowerCase();
+				const password = String(given.password ?? "");
+
+				if (given.intent === "signup") {
+					const result = await register(username, password);
+					if ("error" in result) throw new AccountError(result.error);
+					return { id: result.id, name: result.name };
+				}
+
+				if (tooManyFailures(username)) {
+					throw new AccountError(
+						"Too many tries. Wait 15 minutes and try again.",
+					);
+				}
+				const user = await login(username, password);
+				if (!user) {
+					noteFailure(username);
+					throw new AccountError("Wrong username or password.");
+				}
+				failures.delete(username);
+				return user;
+			},
+		}),
+	],
 	callbacks: {
 		jwt({ token, user }) {
-			// On sign-in, bind the token to our users row (created with the trial if new).
-			if (user?.email) {
-				token.sub = ensureUser(user.email, user.name ?? user.email).id;
-			}
+			// Every provider returns our users row id.
+			if (user?.id) token.sub = user.id;
 			return token;
 		},
 		session({ session, token }) {

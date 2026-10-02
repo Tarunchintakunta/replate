@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { currentUser } from "../../../lib/auth/current-user";
-import { localCreditsAllowed } from "../../../lib/auth/users";
+import {
+	freeCreditsAllowed,
+	localCreditsAllowed,
+} from "../../../lib/auth/users";
 import { billingEnabled } from "../../../lib/billing/checkout";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function PricingPage() {
 	const enabled = billingEnabled();
 	const user = await currentUser();
+	const free = user ? freeCreditsAllowed(user.email) : false;
 	const local = user ? localCreditsAllowed(user.email) : false;
 
 	return (
@@ -38,7 +42,7 @@ export default async function PricingPage() {
 					</p>
 				)}
 			</div>
-			{local && (
+			{free && (
 				<form
 					action="/api/credits/local"
 					method="post"
@@ -48,10 +52,12 @@ export default async function PricingPage() {
 						type="submit"
 						className="w-full border border-rule text-ink bg-paper py-2 px-4 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-green focus:ring-offset-2 focus:ring-offset-paper"
 					>
-						Add 100 local credits
+						{local ? "Add 100 local credits" : "Add 100 credits"}
 					</button>
 					<p className="text-sm text-ink opacity-70">
-						Free on this Mac, for the local user only.
+						{local
+							? "Free on this Mac, for the local user only."
+							: "Free while edits run on the built-in editor."}
 					</p>
 				</form>
 			)}
