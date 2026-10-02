@@ -72,8 +72,13 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Run in a container
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The `Dockerfile` runs the whole app, OCR and the local editor included. Keep the database and images on a volume:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+docker build -t replate .
+docker run -p 3000:3000 -e PORT=3000 -e AUTH_SECRET=change-me -e DATABASE_URL=/data/replate.db -e STORAGE_PATH=/data/storage -e EDITOR_PROVIDER=local -v replate-data:/data replate
+```
+
+A hosted copy needs `APP_URL` set to its `https://` address and Google sign-in keys; the local button only exists on `http://localhost:3000`. Railway reads `railway.json`. Vercel cannot run the app itself because it has no disk and no Python beside Node. See `docs/kit/adr/006-hosted-copy.md`.
