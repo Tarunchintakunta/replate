@@ -5,17 +5,19 @@
 	"scripts": {
 		"dev": "next dev -H 127.0.0.1",
 		"build": "next build",
-		"start": "next start",
+		"start": "tsx db/migrate.ts && next start",
 		"lint": "eslint && biome check .",
 		"test": "vitest run",
 		"db:generate": "drizzle-kit generate",
-		"db:migrate": "tsx db/migrate.ts"
+		"db:migrate": "tsx db/migrate.ts",
+		"predev": "tsx db/migrate.ts"
 	},
 	"dependencies": {
-		"better-sqlite3": "^13.0.3",
+		"@electric-sql/pglite": "^0.5.8",
 		"drizzle-orm": "^0.45.3",
 		"next": "16.3.7",
 		"next-auth": "5.0.0-beta.32",
+		"pg": "^8.23.1",
 		"react": "19.2.8",
 		"react-dom": "19.2.8",
 		"server-only": "^0.0.1",
@@ -28,8 +30,8 @@
 		"@biomejs/biome": "^2.5.14",
 		"@playwright/test": "^1.63.0",
 		"@tailwindcss/postcss": "^4",
-		"@types/better-sqlite3": "^9.6.0",
 		"@types/node": "^20",
+		"@types/pg": "^8.23.1",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
 		"@types/uuid": "^11.0.0",

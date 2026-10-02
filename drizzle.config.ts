@@ -1,13 +1,8 @@
-import * as dotenv from "dotenv";
 import { defineConfig } from "drizzle-kit";
 
-dotenv.config();
-
+// Generating migrations reads only the schema, so no database URL is needed here.
 export default defineConfig({
 	schema: "./db/schema.ts",
 	out: "./db/migrations",
-	dialect: "sqlite",
-	dbCredentials: {
-		url: process.env.DATABASE_URL || "file:data/replate.db",
-	},
+	dialect: "postgresql",
 });
