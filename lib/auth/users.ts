@@ -23,7 +23,7 @@ export function ensureUser(email: string, name: string) {
 }
 
 // Lowercase letters, digits, dot, dash, underscore. Case-folded so "Ana" and "ana" are one account.
-const USERNAME = /^[a-z0-9._-]{3,32}$/;
+export const USERNAME = /^[a-z0-9._-]{3,32}$/;
 export const PASSWORD_MIN = 8;
 const PASSWORD_MAX = 128;
 
@@ -98,9 +98,12 @@ export function appUrl(): string {
 	return process.env.APP_URL || "http://localhost:3000";
 }
 
-/** The passwordless local button exists only for exactly this origin. */
+/**
+ * The passwordless local button exists only for exactly this origin, and never in a
+ * production build: a hosted copy that forgets APP_URL must not open a shared login.
+ */
 export function localLoginAllowed(): boolean {
-	return appUrl() === "http://localhost:3000";
+	return appUrl() === "http://localhost:3000" && process.env.NODE_ENV !== "production";
 }
 
 /** Free refills go to the passwordless local user and nobody else. */

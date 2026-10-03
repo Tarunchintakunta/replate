@@ -11,6 +11,7 @@ import {
 	localLoginAllowed,
 	login,
 	register,
+	USERNAME,
 } from "../lib/auth/users";
 
 // Without AUTH_SECRET in .env, keep a random one in data/ (gitignored) so a
@@ -48,7 +49,18 @@ function tooManyFailures(username: string): boolean {
 	return entry.count >= FAILURE_LIMIT;
 }
 
+// Only well-formed names are counted, so each key is at most 32 characters, and the map
+// is swept once it holds this many names.
+const FAILURE_KEYS_MAX = 10_000;
+
 function noteFailure(username: string) {
+	if (failures.size >= FAILURE_KEYS_MAX) {
+		const now = Date.now();
+		for (const [name, entry] of failures) {
+			if (now - entry.since > FAILURE_WINDOW_MS) failures.delete(name);
+		}
+		if (failures.size >= FAILURE_KEYS_MAX) failures.clear();
+	}
 	const entry = failures.get(username);
 	if (!entry || Date.now() - entry.since > FAILURE_WINDOW_MS) {
 		failures.set(username, { count: 1, since: Date.now() });
@@ -90,6 +102,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 					return { id: result.id, name: result.name };
 				}
 
+				// A name that cannot exist is wrong without a lookup, and is not counted.
+				if (!USERNAME.test(username)) {
+					throw new AccountError("Wrong username or password.");
+				}
 				if (tooManyFailures(username)) {
 					throw new AccountError(
 						"Too many tries. Wait 15 minutes and try again.",

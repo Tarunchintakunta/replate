@@ -85,6 +85,12 @@ describe("localLoginAllowed", () => {
 			expect(localLoginAllowed()).toBe(false);
 		}
 	});
+
+	it("is false in a production build even on http://localhost:3000", () => {
+		vi.stubEnv("APP_URL", "http://localhost:3000");
+		vi.stubEnv("NODE_ENV", "production");
+		expect(localLoginAllowed()).toBe(false);
+	});
 });
 
 describe("localCreditsAllowed", () => {
