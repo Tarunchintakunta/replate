@@ -26,6 +26,7 @@ Order is the issue number. Do not parallelize. Each slice is one session and one
 | 20 | Migration race | Parallel build workers open one new database without failing |
 | 21 | Postgres and accounts | Neon holds the data; people sign up with a username and password |
 | 22 | Landing and dashboard | `/` is a landing page; `/signin`, `/signup`, and `/dashboard` are their own pages |
+| 23 | Hardening | Detect again after a result works; sign-in counter is bounded; no local login in production |
 
 Issues 09 and 10 are adapters behind the interface from 06. They do not change the UI except the provider pill.
 
