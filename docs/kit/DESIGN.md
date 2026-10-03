@@ -47,7 +47,9 @@ Narrow window, under 800px: image, then the list, then the button. The button st
 
 ## Motion
 
-Selection and button state change in under 150ms. No page transitions. No confetti.
+Selection and button state change in under 150ms. No confetti.
+
+The landing and sign-in pages may move (changed 2026-10-03 at the builder's request): text rises in on load, sections fade up once as they scroll in, and a small demo shows a line being chosen, retyped, and swapped. Motion is CSS only and stops under `prefers-reduced-motion`. The desk itself stays still.
 
 ## Accessibility
 
@@ -56,6 +58,10 @@ Selection and button state change in under 150ms. No page transitions. No confet
 - Color is not the only selected state. A selected row has a check.
 - Contrast of ink on paper stays above 7:1 for body text.
 
+## Routes
+
+`/` is a one-page landing: what it does, a real before and after from the local editor, how it works, what it is good at and where it struggles. `/signin` and `/signup` sit beside a small live demo. `/dashboard` is the desk. A signed-in visitor goes straight from the landing to the desk with one button.
+
 ## Do not ship
 
-A pricing countdown, a locale switcher, comparison tables, or a marketing homepage that delays the workspace. The `/` route is the workspace. A one-screen `/pricing` can exist when Stripe arrives. It lists the pack in plain numbers. No crossed-out fantasy price.
+A pricing countdown, a locale switcher, or comparison tables. A one-screen `/pricing` can exist when Stripe arrives. It lists the pack in plain numbers. No crossed-out fantasy price.

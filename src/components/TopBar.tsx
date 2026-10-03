@@ -29,7 +29,12 @@ export function TopBar({ account }: { account?: ReactNode }) {
 		<header className="h-[56px] border-b border-rule flex items-center justify-between gap-3 px-4 shrink-0">
 			<div className="flex items-center shrink-0">
 				<h1 className="font-display italic text-2xl font-semibold tracking-tight text-ink">
-					Replate
+					<Link
+						href="/"
+						className="rounded focus:outline-none focus:ring-2 focus:ring-green"
+					>
+						Replate
+					</Link>
 				</h1>
 			</div>
 			<div className="flex items-center gap-2 sm:gap-4 text-sm min-w-0 whitespace-nowrap">

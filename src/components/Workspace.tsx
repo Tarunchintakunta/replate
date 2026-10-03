@@ -124,13 +124,7 @@ export function Workspace() {
 	};
 
 	return (
-		<main className="flex-1 flex flex-col items-center justify-center p-4 lg:p-8">
-			<div className="text-center mb-8">
-				<p className="text-lg text-ink font-medium">
-					Change the words. Keep the picture.
-				</p>
-			</div>
-
+		<main className="flex-1 flex flex-col items-center p-4 lg:p-8">
 			<div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-6 flex-1 min-h-0">
 				<div
 					data-testid="left-col"
