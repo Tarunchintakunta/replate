@@ -48,7 +48,8 @@ export const generations = pgTable("generations", {
 // The spec names no key for this table; rows are only ever read by generation.
 export const generationReplacements = pgTable("generation_replacements", {
 	generationId: text("generation_id").notNull().references(() => generations.id),
-	ocrLineId: text("ocr_line_id").references(() => ocrLines.id),
+	// Detecting again replaces an image's lines; a past result keeps its own copy of the box.
+	ocrLineId: text("ocr_line_id").references(() => ocrLines.id, { onDelete: "set null" }),
 	fromText: text("from_text").notNull(),
 	toText: text("to_text").notNull(),
 	x: integer("x").notNull(),
