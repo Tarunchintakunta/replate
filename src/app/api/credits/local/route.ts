@@ -20,5 +20,8 @@ export async function POST() {
 
 	await db.transaction((tx) => grantLocalPack(user.id, tx));
 	// Form post from /pricing: a relative 303 lands back on the desk on any port.
-	return new NextResponse(null, { status: 303, headers: { Location: "/" } });
+	return new NextResponse(null, {
+		status: 303,
+		headers: { Location: "/dashboard" },
+	});
 }

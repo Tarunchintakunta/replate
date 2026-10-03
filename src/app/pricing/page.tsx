@@ -61,7 +61,10 @@ export default async function PricingPage() {
 					</p>
 				</form>
 			)}
-			<Link href="/" className="text-sm text-ink underline underline-offset-2">
+			<Link
+				href="/dashboard"
+				className="text-sm text-ink underline underline-offset-2"
+			>
 				Back to the desk
 			</Link>
 		</main>

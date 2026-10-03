@@ -24,8 +24,8 @@ export async function createCheckout(userId: string): Promise<string> {
 		line_items: [{ price, quantity: 1 }],
 		metadata: { userId },
 		client_reference_id: userId,
-		success_url: `${appUrl()}/`,
-		cancel_url: `${appUrl()}/`,
+		success_url: `${appUrl()}/dashboard`,
+		cancel_url: `${appUrl()}/dashboard`,
 	});
 	if (!session.url) {
 		throw new Error("Stripe returned no checkout URL");

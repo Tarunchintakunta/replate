@@ -4,8 +4,9 @@ import { test, expect } from '@playwright/test';
 test('shell empty state', async ({ page }) => {
   await signIn(page);
 
-  await expect(page.getByRole('heading', { name: 'Replate' })).toBeVisible();
-  await expect(page.getByText('Change the words. Keep the picture.')).toBeVisible();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole('link', { name: 'Replate' })).toBeVisible();
+  await expect(page.getByText('Hello, Local Dev')).toBeVisible();
   await expect(page.getByText('Drop a PNG, JPG, or WebP.')).toBeVisible();
   await expect(page.getByText('10').first()).toBeVisible();
 });
