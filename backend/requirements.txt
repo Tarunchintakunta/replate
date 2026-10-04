@@ -1,0 +1,19 @@
+# Verified together on Python 3.12, CPU only.
+# Install CPU torch and the Paddle CPU wheel first. See README.
+#   pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+#   pip install paddlepaddle==3.2.0 -i https://www.paddlepaddle.org.cn/packages/stable/cpu/
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+pydantic==2.10.4
+pydantic-settings==2.7.0
+pillow==11.1.0
+opencv-python-headless==4.11.0.86
+numpy==2.5.3
+pymupdf==1.25.3
+httpx==0.28.1
+pytest==8.3.4
+paddleocr==3.3.2
+fal-client==1.0.3
+python-dotenv==1.2.4
+openai==3.24.0

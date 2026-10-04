@@ -1,0 +1,121 @@
+[
+ {
+  "image": "test-images/receipt_tesco.jpg",
+  "ocr": "scratch-ocr/receipt_tesco.json",
+  "line": "EVERY LITTLE HELPS",
+  "new": "EVERY LITTLE HELPS",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/receipt_tesco.jpg",
+  "ocr": "scratch-ocr/receipt_tesco.json",
+  "line": "EVERY LITTLE HELPS",
+  "new": "EVERY LITTLE COUNTS",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/receipt_tesco.jpg",
+  "ocr": "scratch-ocr/receipt_tesco.json",
+  "line": "EVERY LITTLE HELPS",
+  "new": "EVERY LITTLE MATTERS",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/receipt_tesco.jpg",
+  "ocr": "scratch-ocr/receipt_tesco.json",
+  "line": "EVERY LITTLE HELPS",
+  "new": "EVERY LITTLE ZAPS",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/receipt_tesco.jpg",
+  "ocr": "scratch-ocr/receipt_tesco.json",
+  "line": "TUNA STEAKS",
+  "new": "TUNA FILLETS",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/receipt_tesco.jpg",
+  "ocr": "scratch-ocr/receipt_tesco.json",
+  "line": "THANK YOU",
+  "new": "THANKS AGAIN",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/receipt_italian.jpg",
+  "ocr": "scratch-ocr/receipt_italian.json",
+  "line": "TOTALE COMPLESSIVO",
+  "new": "TOTALE GENERALE",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/outline_llangennech.jpg",
+  "ocr": "scratch-ocr/outline_llangennech.json",
+  "line": "LLANGENNECH",
+  "new": "LLANELLI",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/outline_llangennech.jpg",
+  "ocr": "scratch-ocr/outline_llangennech.json",
+  "line": "carefully",
+  "new": "slowly",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/rotated_avenue_road.jpg",
+  "ocr": "scratch-ocr/rotated_avenue_road.json",
+  "line": "AVENUE",
+  "new": "DRIVE",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/dark_abbey_road.jpg",
+  "ocr": "scratch-ocr/dark_abbey_road.json",
+  "line": "ABBEY R.",
+  "new": "ABBOT R.",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/dark_neon_news.jpg",
+  "ocr": "scratch-ocr/dark_neon_news.json",
+  "line": "NEWS",
+  "new": "NEWT",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/sign_portland_night_market.jpg",
+  "ocr": "scratch-ocr/sign_portland_night_market.json",
+  "line": "NIGHT",
+  "new": "LIGHT",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/sign_portland_night_market.jpg",
+  "ocr": "scratch-ocr/sign_portland_night_market.json",
+  "line": "PORTLAND",
+  "new": "OAKLAND",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/receipt_family_dollar.jpg",
+  "ocr": "scratch-ocr/receipt_family_dollar.json",
+  "line": "CASH",
+  "new": "CARD",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/poster_measles.jpg",
+  "ocr": "scratch-ocr/poster_measles.json",
+  "line": "MEASLES",
+  "new": "MUMPS",
+  "mode": "auto"
+ },
+ {
+  "image": "test-images/green_faded_shop.jpg",
+  "ocr": "scratch-ocr/green_faded_shop.json",
+  "line": "Artistic",
+  "new": "Artisan",
+  "mode": "auto"
+ }
+]
