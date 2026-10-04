@@ -26,6 +26,10 @@ COPY --from=ui /ui/dist frontend/dist
 ENV PYTHONUNBUFFERED=1
 ENV REWORDS_CORS_ORIGINS=*
 ENV FLAGS_use_mkldnn=0
+ENV PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
 EXPOSE 8741
+
+# LaMa in the image so hosted edits do not sit on "setup incomplete".
+RUN python scripts/download_models.py --lama-only
 
 CMD ["sh", "-c", "uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port ${PORT:-8741}"]

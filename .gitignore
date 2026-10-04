@@ -36,3 +36,5 @@ blob-report/
 .next/
 .omc/
 .claude/
+.vercel
+.env*

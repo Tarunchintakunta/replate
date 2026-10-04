@@ -43,6 +43,10 @@ def main() -> int:
             return 1
         print(f"LaMa checksum ok: {digest}")
 
+    if "--lama-only" in sys.argv:
+        print("Skipping Paddle warmup.")
+        return 0
+
     cache = MODELS / "paddlex"
     os.environ["PADDLE_PDX_CACHE_HOME"] = str(cache)
     os.environ["PADDLEX_HOME"] = str(cache)
