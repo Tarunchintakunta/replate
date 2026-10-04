@@ -44,8 +44,7 @@ def test_condensed_bold_is_selected_for_condensed_bold_ink():
     assert style.font_confidence is not None and style.font_confidence >= 0.45
 
 
-def test_low_confidence_replacement_is_not_drawn():
-    from app.errors import AppError
+def test_low_confidence_replacement_is_still_drawn():
     from app.image.editing import replace_raster_text
     from app.models.domain import BBox, TextRegion
 
@@ -63,10 +62,7 @@ def test_low_confidence_replacement_is_not_drawn():
     region.style.bold = True
     region.style.font_label = "Barlow Condensed Bold"
     region.style.font_confidence = 0.27
-    try:
-        replace_raster_text(image, image, region, "EVERY LITTLE COUNTS", "fast")
-    except AppError as exc:
-        assert exc.code == "FONT_MATCH_LOW"
-        assert "%" not in exc.message  # no match percentage is shown as a claim
-        return
-    raise AssertionError("low confidence replacement was drawn")
+    edited, _mode, _fallback, _draw, _score = replace_raster_text(
+        image, image, region, "EVERY LITTLE COUNTS", "fast"
+    )
+    assert not np.array_equal(edited, image)

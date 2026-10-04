@@ -9,9 +9,10 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import router
-from app.config import apply_model_env, get_settings
+from app.config import PROJECT_ROOT, apply_model_env, get_settings
 from app.errors import AppError
 from app.services.document_service import get_service
 
@@ -37,9 +38,10 @@ def create_app() -> FastAPI:
     settings = get_settings()
     apply_model_env(settings)
     app = FastAPI(title="Local ReWords", version="1.0.0", lifespan=lifespan)
+    origins = ["*"] if settings.cors_allow_all else settings.cors_origin_list
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origin_list,
+        allow_origins=origins,
         allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -73,6 +75,10 @@ def create_app() -> FastAPI:
             status_code=500,
             content={"error": {"code": "INTERNAL", "message": "The request failed."}},
         )
+
+    dist = PROJECT_ROOT / "frontend" / "dist"
+    if dist.is_dir():
+        app.mount("/", StaticFiles(directory=dist, html=True), name="ui")
 
     return app
 

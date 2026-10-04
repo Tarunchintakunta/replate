@@ -102,7 +102,7 @@ export default function App() {
       const result = await replaceText(documentState.id, selected.id, draft.trim(), "auto");
       setDocumentState(result.document);
       setDraft(draft.trim());
-      setNotice("Text replaced.");
+      setNotice(result.fallback_reason || "Text replaced.");
       setCompare(0);
     } catch (caught) {
       fail(caught);

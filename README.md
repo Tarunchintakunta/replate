@@ -99,6 +99,10 @@ npm run dev
 
 Windows is the same. The dev server listens on `http://127.0.0.1:8742` and proxies `/api` to port 8741.
 
+## Hosted (Railway)
+
+`railway.json` builds the `Dockerfile`. That image serves the UI and the API on one `PORT`. Set `REWORDS_CORS_ORIGINS=*` (the image already does). Optional: `OPENAI_API_KEY` or `FAL_KEY` for the neural redraw. The first OCR on a new instance downloads Paddle weights into `models/`.
+
 ## Open the app and try a replacement
 
 1. Open [http://127.0.0.1:8742](http://127.0.0.1:8742).

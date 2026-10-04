@@ -14,7 +14,6 @@ from app.inpainting.opencv_provider import OpenCVInpainting
 from app.inpainting.selector import select_mode
 from app.metrics import Timer, record
 from app.models.domain import TextRegion
-from app.rendering.font_match import MIN_FONT_MATCH, SOFT_FONT_MATCH
 from app.rendering.fonts import resolve_font
 from app.rendering.glyph_bank import GlyphBank
 from app.config import get_settings
@@ -125,14 +124,12 @@ def replace_raster_text(
     # The line could not be cut into letters. Redraw it whole.
     missing = bank.missing_chars(new_text)
     use_glyphs = missing == ""
-    if not use_glyphs:
-        _refuse_weak_font(region, missing, ai_note)
-        if resolve_font(region.style.family, region.style.bold) is None:
-            raise AppError(
-                "MISSING_FONTS",
-                "Bundled fonts were not found in the fonts/ directory, so replacement text cannot be drawn.",
-                500,
-            )
+    if not use_glyphs and resolve_font(region.style.family, region.style.bold) is None:
+        raise AppError(
+            "MISSING_FONTS",
+            "Bundled fonts were not found in the fonts/ directory, so replacement text cannot be drawn.",
+            500,
+        )
     try:
         if mode == "ai":
             try:
@@ -165,33 +162,16 @@ def replace_raster_text(
             rendered, report = _fit(cleaned, reference_bgr, polygon, region, new_text, bank, appearance, use_glyphs)
             score = report.total
             draw_source = "glyphs" if use_glyphs else "font"
-            provisional = (
-                region.style.font_confidence is not None and region.style.font_confidence < MIN_FONT_MATCH
-            )
-            if draw_source == "font" and provisional and report.total < 0.75:
-                raise AppError(
-                    "FONT_MATCH_LOW",
-                    "This line could not be redrawn in its own print, so nothing was changed.",
-                    422,
+            if use_glyphs and not report.accepted and resolve_font(region.style.family, region.style.bold) is not None:
+                logger.info(
+                    "Page-letter copy scored %s%% and was redrawn with the bundled face",
+                    report.percent,
                 )
-            if use_glyphs and not report.accepted:
-                font_ok = region.style.font_confidence is None or region.style.font_confidence >= MIN_FONT_MATCH
-                if font_ok and resolve_font(region.style.family, region.style.bold) is not None:
-                    logger.info(
-                        "Page-letter copy scored %s%% and was redrawn with the bundled face",
-                        report.percent,
-                    )
-                    rendered, report = _fit(
-                        cleaned, reference_bgr, polygon, region, new_text, bank, appearance, False
-                    )
-                    score = report.total
-                    draw_source = "font"
-                else:
-                    raise AppError(
-                        "FONT_MATCH_LOW",
-                        "This line could not be redrawn in its own print, so nothing was changed.",
-                        422,
-                    )
+                rendered, report = _fit(
+                    cleaned, reference_bgr, polygon, region, new_text, bank, appearance, False
+                )
+                score = report.total
+                draw_source = "font"
     except AppError:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -292,18 +272,3 @@ def _read_text(page: np.ndarray, polygon: np.ndarray, area: np.ndarray) -> str:
     return " ".join(item.text for item in found)
 
 
-def _refuse_weak_font(region: TextRegion, missing: str, ai_note: str | None = None) -> None:
-    confidence = region.style.font_confidence
-    if confidence is None or confidence >= SOFT_FONT_MATCH:
-        return
-    if missing:
-        shown = ", ".join(missing[:12])
-        extra = f" The page has no copies of {shown}."
-    else:
-        extra = ""
-    raise AppError(
-        "FONT_MATCH_LOW",
-        f"This line could not be redrawn in its own print, so nothing was changed.{extra}"
-        + (f" {ai_note}" if ai_note else ""),
-        422,
-    )

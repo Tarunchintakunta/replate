@@ -46,6 +46,10 @@ class Settings(BaseSettings):
         return [item.strip() for item in self.cors_origins.split(",") if item.strip()]
 
     @property
+    def cors_allow_all(self) -> bool:
+        return "*" in self.cors_origin_list
+
+    @property
     def lama_path(self) -> Path:
         return self.models_dir / self.lama_relpath
 
