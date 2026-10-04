@@ -58,13 +58,15 @@ def replace_raster_text(
                 used["mode"], used["fallback"] = "fast", exc.message
         return _FAST.inpaint(image, erase)
 
+    preserved = None
+    source = region.source_text or region.text
     if region.source == "ocr":
         try:
             preserved = preserve_line(
                 working_bgr,
                 reference_bgr,
                 polygon,
-                region.source_text or region.text,
+                source,
                 new_text,
                 bank,
                 inpaint=inpaint,
@@ -76,18 +78,19 @@ def replace_raster_text(
         except Exception:  # noqa: BLE001
             logger.exception("Page-letter rebuild failed; using the line redraw")
             preserved = None
-        if preserved is not None and not preserved.synthesized and not (preserved.rescaled and text_edit.key_present()):
-            record("raster_replace", timer.ms(), mode=used["mode"], complexity=round(complexity, 3), requested=requested_mode, draw="glyphs")
-            return preserved.image, used["mode"], used["fallback"], "glyphs", None
 
-    # Letters the page never printed, or a line that does not cut into letters:
-    # a neural text edit redraws only the changed letters, when it is allowed.
+    # One path for every photo: when a key is set, redraw the change with the
+    # image editor. No per-image or per-word list. Local stamps run only if
+    # this is off, the texts match, or the API call fails.
     ai_note = None
-    if region.source == "ocr" and get_settings().text_edit != "off":
+    if (
+        region.source == "ocr"
+        and get_settings().text_edit != "off"
+        and source.strip() != new_text.strip()
+    ):
         if not text_edit.key_present():
             ai_note = "AI text edit was not used: no OPENAI_API_KEY or FAL_KEY in .env."
         else:
-            source = region.source_text or region.text
             restored = _restore_line(working_bgr, reference_bgr, polygon)
             area = change_mask(reference_bgr, polygon, source, new_text)
             if area is None:
@@ -100,6 +103,10 @@ def replace_raster_text(
                 record("raster_replace", timer.ms(), mode="ai_text", requested=requested_mode, draw="ai_text", candidates=result.candidates)
                 note = f"Redrawn by the AI text editor ({text_edit.engine()}); only the changed letters were replaced. OCR reads: {result.read_as!r}."
                 return result.image, "ai_text", note, "ai_text", None
+
+    if preserved is not None and not preserved.synthesized:
+        record("raster_replace", timer.ms(), mode=used["mode"], complexity=round(complexity, 3), requested=requested_mode, draw="glyphs")
+        return preserved.image, used["mode"], used["fallback"] or ai_note, "glyphs", None
 
     if region.source == "ocr":
         if preserved is not None:
